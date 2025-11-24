@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/ValianceTekProject/AreaBack/initializers"
+	"github.com/gin-gonic/gin"
 )
 
 type todo struct {
@@ -25,6 +27,7 @@ func getTodos(context *gin.Context) {
 
 func main() {
     fmt.Println("Hello")
+	initializers.ConnectDB();
 	router := gin.Default()
 	router.GET("/todos", getTodos)
 	router.Run("0.0.0.0:8080")

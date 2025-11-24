@@ -8,9 +8,10 @@ RUN go mod download
 FROM base as builder
 COPY --from=deps /go/pkg /go/pkg
 COPY . .
+RUN go run github.com/steebchen/prisma-client-go generate
 RUN go build -o back .
 
-FROM alpine:3.21 AS final
-COPY --from=builder /app/back .
+FROM base AS final
+COPY --from=builder /app/ .
 EXPOSE 8080
 CMD ["./back"]
