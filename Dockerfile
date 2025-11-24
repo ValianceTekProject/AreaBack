@@ -1,14 +1,12 @@
 FROM golang:1.25-alpine3.22 AS base
 WORKDIR /app
 
-# to update later
-# COPY go.mod go.sum ./
 FROM base AS deps
-COPY go.mod ./
+COPY go.mod go.sum ./
 RUN go mod download
 
 FROM base as builder
-# COPY --from=deps /go/pkg /go/pkg
+COPY --from=deps /go/pkg /go/pkg
 COPY . .
 RUN go build -o back .
 
