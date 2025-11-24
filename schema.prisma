@@ -1,5 +1,4 @@
 datasource db {
-  // could be postgresql or mysql
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
@@ -10,9 +9,8 @@ generator db {
   binaryTargets = ["linux-musl"]
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String?
+model Todo {
+  Id        Int     @id @default(autoincrement())
+  Item      String  @unique
+  Completed Boolean
 }

@@ -1,25 +1,19 @@
 package initializers
 
 import (
-	// "context"
-	// "encoding/json"
 	"fmt"
 
-	// adapt "demo" to your module name if it differs
 	"github.com/ValianceTekProject/AreaBack/db"
 )
 
+var DB *db.PrismaClient
+
 func ConnectDB() error {
-	client := db.NewClient()
-	if err := client.Prisma.Connect(); err != nil {
-		fmt.Println("❌ Erreur connexion DB:", err)
+	DB = db.NewClient()
+	if err := DB.Prisma.Connect(); err != nil {
+		fmt.Println("Failed to connect to database", err)
 		return err
 	}
-	defer func() {
-		if err := client.Prisma.Disconnect(); err != nil {
-			panic(err)
-		}
-	}()
-	fmt.Println("✅ Connecté à la base de données !")
+	fmt.Println("Connected to database !")
 	return nil
 }
