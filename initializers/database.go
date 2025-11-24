@@ -1,7 +1,7 @@
 package initializers
 
 import (
-	// "context"
+	"context"
 	// "encoding/json"
 	"fmt"
 
@@ -12,7 +12,7 @@ import (
 func ConnectDB() error {
 	client := db.NewClient()
 	if err := client.Prisma.Connect(); err != nil {
-		fmt.Println("❌ Erreur connexion DB:", err)
+		fmt.Println("Failed to connect to database", err)
 		return err
 	}
 	defer func() {
@@ -20,6 +20,11 @@ func ConnectDB() error {
 			panic(err)
 		}
 	}()
-	fmt.Println("✅ Connecté à la base de données !")
+	fmt.Println("Connected to database !")
+	ctx := context.Background()
+	client.Todo.CreateOne(
+		db.Todo.Item.Set("Example"),
+		db.Todo.Completed.Set(false),
+	).Exec(ctx)
 	return nil
 }
