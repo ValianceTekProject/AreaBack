@@ -9,7 +9,7 @@ generator db {
   binaryTargets = ["linux-musl"]
 }
 
-model todo {
+model Todo {
   Id        Int     @id @default(autoincrement())
   Item      String  @unique
   Completed Boolean

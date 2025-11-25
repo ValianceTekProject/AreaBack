@@ -14,4 +14,4 @@ RUN go build -o back .
 FROM base AS final
 COPY --from=builder /app/ .
 EXPOSE 8080
-CMD ["./back"]
+CMD ["sh", "-c", "go run github.com/steebchen/prisma-client-go db push && ./back"]
