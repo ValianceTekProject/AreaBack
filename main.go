@@ -11,5 +11,6 @@ func main() {
 	router := gin.Default()
 	router.POST("/todos/add", handlers.PostTodos)
 	router.DELETE("/todos/del", handlers.DelTodos)
+	router.GET("/todos/", handlers.GetTodos)
 	router.Run("0.0.0.0:8080")
 }

@@ -1,10 +1,11 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/ValianceTekProject/AreaBack/db"
 	"github.com/ValianceTekProject/AreaBack/initializers"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 type todo struct {
@@ -23,7 +24,6 @@ func PostTodos(context *gin.Context) {
 		db.Todo.Item.Set(newTodo.Item),
 		db.Todo.Completed.Set(newTodo.Completed),
 	).Exec(context)
-
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": "Database insert error"})
 		return
@@ -42,11 +42,19 @@ func DelTodos(context *gin.Context) {
 	_, err := initializers.DB.Todo.FindUnique(
 		db.Todo.Item.Equals(newTodo.Item),
 	).Delete().Exec(context)
-
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": "Database remove error"})
 		return
 	}
 
 	context.Status(http.StatusOK)
+}
+
+func GetTodos(context *gin.Context) {
+	todos, err := initializers.DB.Todo.FindMany().Exec(context)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		return
+	}
+	context.JSON(http.StatusOK, todos);
 }
