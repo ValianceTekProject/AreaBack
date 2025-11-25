@@ -12,5 +12,6 @@ func main() {
 	router.POST("/todos/add", handlers.PostTodos)
 	router.DELETE("/todos/del", handlers.DelTodos)
 	router.GET("/todos/", handlers.GetTodos)
+	router.PATCH("/todos/mod", handlers.ModifyStatus)
 	router.Run("0.0.0.0:8080")
 }

@@ -42,6 +42,7 @@ func DelTodos(context *gin.Context) {
 	_, err := initializers.DB.Todo.FindUnique(
 		db.Todo.Item.Equals(newTodo.Item),
 	).Delete().Exec(context)
+
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": "Database remove error"})
 		return
@@ -56,5 +57,22 @@ func GetTodos(context *gin.Context) {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	}
-	context.JSON(http.StatusOK, todos);
+	context.JSON(http.StatusOK, todos)
+}
+
+func ModifyStatus(context *gin.Context) {
+	var newTodo todo
+	if err := context.BindJSON(&newTodo); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+	_, err := initializers.DB.Todo.FindUnique(
+		db.Todo.Item.Equals(newTodo.Item),
+	).Update(db.Todo.Completed.Set(newTodo.Completed)).Exec(context)
+
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update in database"})
+		return
+	}
+	context.Status(http.StatusOK)
 }
