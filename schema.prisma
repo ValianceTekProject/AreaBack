@@ -16,8 +16,8 @@ model Users {
   passwordHash  String   @map("password_hash")
   createdAt     DateTime @default(now()) @map("created_at")
   
-  areas         Area[]
-  serviceTokens UserServiceToken[]
+  areas         Areas[]
+  serviceTokens UserServiceTokens[]
 
   @@map("users")
 }
@@ -27,9 +27,9 @@ model Services {
   name        String
   description String
   
-  userTokens  UserServiceToken[]
-  actions     Action[]
-  reactions   Reaction[]
+  userTokens  UserServiceTokens[]
+  actions     Actions[]
+  reactions   Reactions[]
 
   @@map("services")
 }
@@ -43,8 +43,8 @@ model UserServiceTokens {
   expiresAt    DateTime @map("expires_at")
   metadata     Json?    @db.JsonB
   
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  user    Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  service Services @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@map("user_service_tokens")
 }
@@ -57,9 +57,9 @@ model Areas {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  actions   Action[]
-  reactions Reaction[]
+  user      Users       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actions   Actions[]
+  reactions Reactions[]
 
   @@map("areas")
 }
@@ -73,8 +73,8 @@ model Actions {
   lastTriggeredAt DateTime? @map("last_triggered_at")
   lastState       Json?     @map("last_state") @db.JsonB
   
-  area    Area    @relation(fields: [areaId], references: [id], onDelete: Cascade)
-  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  area    Areas    @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  service Services @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@map("actions")
 }
@@ -86,8 +86,8 @@ model Reactions {
   type      String
   config    Json   @db.JsonB
   
-  area    Area    @relation(fields: [areaId], references: [id], onDelete: Cascade)
-  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  area    Areas    @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  service Services @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@map("reactions")
 }
