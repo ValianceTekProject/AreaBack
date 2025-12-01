@@ -9,8 +9,85 @@ generator db {
   binaryTargets = ["linux-musl"]
 }
 
-model Todo {
-  Id        Int     @id @default(autoincrement())
-  Item      String  @unique
-  Completed Boolean
+
+model Users {
+  id            String   @id @default(uuid()) @db.Uuid
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  createdAt     DateTime @default(now()) @map("created_at")
+  
+  areas         Area[]
+  serviceTokens UserServiceToken[]
+
+  @@map("users")
+}
+
+model Services {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String
+  
+  userTokens  UserServiceToken[]
+  actions     Action[]
+  reactions   Reaction[]
+
+  @@map("services")
+}
+
+model UserServiceTokens {
+  id           Int      @id @default(autoincrement())
+  userId       String   @map("user_id") @db.Uuid
+  serviceId    Int      @map("service_id")
+  accessToken  String   @map("access_token")
+  refreshToken String   @map("refresh_token")
+  expiresAt    DateTime @map("expires_at")
+  metadata     Json?    @db.JsonB
+  
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@map("user_service_tokens")
+}
+
+model Areas {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  name      String
+  isEnabled Boolean  @default(true) @map("is_enabled")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actions   Action[]
+  reactions Reaction[]
+
+  @@map("areas")
+}
+
+model Actions {
+  id              String    @id @default(uuid()) @db.Uuid
+  areaId          String    @map("area_id") @db.Uuid
+  serviceId       Int       @map("service_id")
+  type            String
+  config          Json      @db.JsonB
+  lastTriggeredAt DateTime? @map("last_triggered_at")
+  lastState       Json?     @map("last_state") @db.JsonB
+  
+  area    Area    @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@map("actions")
+}
+
+model Reactions {
+  id        String @id @default(uuid()) @db.Uuid
+  areaId    String @map("area_id") @db.Uuid
+  serviceId Int    @map("service_id")
+  type      String
+  config    Json   @db.JsonB
+  
+  area    Area    @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@map("reactions")
 }
