@@ -128,7 +128,7 @@ func saveOrUpdateGoogleUser(info model.GoogleUserInfo, token *oauth2.Token) (*db
 
 func GoogleLogin(ctx *gin.Context) {
 	oauthState := generateStateOauthCookie()
-	ctx.SetCookie("oauthState", oauthState, 3600, "/", "", true, true)
+	ctx.SetCookie("oauthState", oauthState, 3600, "/", "", false, true)
 	url := googleOauthConfig.AuthCodeURL(oauthState, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	ctx.Redirect(http.StatusTemporaryRedirect, url)
 }
@@ -168,8 +168,18 @@ func GoogleCallback(ctx *gin.Context) {
 		return
 	}
 
+	tokenJWT, err := GenerateJWT(user.ID)
+    if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"User Id": user.ID})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Token generation failed: " + err.Error()})
+        return
+    }
+
+    ctx.SetCookie("Authorization", tokenJWT, 3600 * 24 *7, "/", "", false, true) 
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
+        "token": tokenJWT,
 		"user": gin.H{
 			"id":    user.ID,
 			"email": user.Email,
