@@ -170,7 +170,6 @@ func GoogleCallback(ctx *gin.Context) {
 
 	tokenJWT, err := GenerateJWT(user.ID)
     if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"User Id": user.ID})
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Token generation failed: " + err.Error()})
         return
     }
