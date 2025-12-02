@@ -24,8 +24,7 @@ model Users {
 
 model Services {
   id          Int     @id @default(autoincrement())
-  name        String
-  description String
+  name        String  @unique
   
   userTokens  UserServiceTokens[]
   actions     Actions[]

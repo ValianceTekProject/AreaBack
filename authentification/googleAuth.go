@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/ValianceTekProject/AreaBack/db"
 	"github.com/ValianceTekProject/AreaBack/initializers"
@@ -17,16 +18,23 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
-var googleOauthConfig = &oauth2.Config{
-	RedirectURL:  "http://localhost:8080/auth/google/callback",
-	ClientID:     "{PATTERN}.apps.googleusercontent.com",
-	ClientSecret: "{SECRET}",
-	Scopes: []string{
-		"https://www.googleapis.com/auth/userinfo.email",
-		"https://www.googleapis.com/auth/photoslibrary.readonly",
-	},
-	Endpoint: google.Endpoint,
+func getGoogleOAuthConfig() *oauth2.Config {
+	clientID := os.Getenv("GOOGLE_CLIENT_ID")
+	clientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
+	redirectURL := os.Getenv("GOOGLE_REDIRECT_URL")
+
+	return &oauth2.Config{
+		RedirectURL:  redirectURL,
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		Scopes: []string{
+			"https://www.googleapis.com/auth/userinfo.email",
+		},
+		Endpoint: google.Endpoint,
+	}
 }
+
+var googleOauthConfig *oauth2.Config = getGoogleOAuthConfig()
 
 func generateStateOauthCookie() string {
 	file := make([]byte, 16)
@@ -36,53 +44,86 @@ func generateStateOauthCookie() string {
 	return state
 }
 
-func getUserDataFromGoogle(code string) ([]byte, error) {
-	userInfoURL := "https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken
-	response, err := http.Get(userInfoURL)
-	if err != nil {
-		return nil, fmt.Errorf("Failed getting user info: %s", err.Error())
-	}
-	defer response.Body.Close()
-	contents, err := io.ReadAll(response.Body)
-	if err != nil {
-		return nil, fmt.Errorf("Failed read response: %s", err.Error())
-	}
+func getUserDataFromGoogle(token *oauth2.Token) ([]byte, error) {
+    userInfoURL := "https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken
+    response, err := http.Get(userInfoURL)
+    if err != nil {
+        return nil, fmt.Errorf("Failed getting user info: %s", err.Error())
+    }
+    defer response.Body.Close()
+    contents, err := io.ReadAll(response.Body)
+    if err != nil {
+        return nil, fmt.Errorf("Failed read response: %s", err.Error())
+    }
 
-	return contents, nil
+    return contents, nil
 }
 
 func saveOrUpdateGoogleUser(info model.GoogleUserInfo, token *oauth2.Token) (*db.UsersModel, error) {
-
 	ctx := context.Background()
-    
-    existingUser, err := initializers.DB.Users.FindUnique(
-        db.Users.Email.Equals(info.Email),
-    ).Exec(ctx)
+	serviceName := "Google"
+
+	service, _ := initializers.DB.Services.FindUnique(
+		db.Services.Name.Equals(serviceName),
+	).Exec(ctx)
+
+	existingUser, err := initializers.DB.Users.FindUnique(
+		db.Users.Email.Equals(info.Email),
+	).Exec(ctx)
+
+	if err == nil && existingUser != nil {
+		existingToken, _ := initializers.DB.UserServiceTokens.FindFirst(
+			db.UserServiceTokens.UserID.Equals(existingUser.ID),
+			db.UserServiceTokens.ServiceID.Equals(service.ID),
+		).Exec(ctx)
+
+		if existingToken != nil {
+			_, err = initializers.DB.UserServiceTokens.FindUnique(
+				db.UserServiceTokens.ID.Equals(existingToken.ID),
+			).Update(
+				db.UserServiceTokens.AccessToken.Set(token.AccessToken),
+				db.UserServiceTokens.RefreshToken.Set(token.RefreshToken),
+				db.UserServiceTokens.ExpiresAt.Set(token.Expiry),
+			).Exec(ctx)
+		} else {
+			_, err = initializers.DB.UserServiceTokens.CreateOne(
+				db.UserServiceTokens.AccessToken.Set(token.AccessToken),
+				db.UserServiceTokens.RefreshToken.Set(token.RefreshToken),
+				db.UserServiceTokens.ExpiresAt.Set(token.Expiry),
+				db.UserServiceTokens.User.Link(db.Users.ID.Equals(existingUser.ID)),
+				db.UserServiceTokens.Service.Link(db.Services.ID.Equals(service.ID)),
+			).Exec(ctx)
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		return existingUser, nil
+	}
+
+	newUser, err := initializers.DB.Users.CreateOne(
+		db.Users.Email.Set(info.Email),
+		db.Users.PasswordHash.Set(""),
+	).Exec(ctx)
 
 	if err != nil {
-    	return nil, err
+		return nil, err
 	}
 
-	if existingUser != nil {
-		updatedServiceToken, err := initializers.DB.UserServiceTokens.FindUnique(
-			db.UserServiceTokens.UserIDServiceIDEq(existingUser.ID, serviceID),
-		).Update(
-			db.UserServiceTokens.AccessToken.Set(token.AccessToken),
-			db.UserServiceTokens.RefreshToken.Set(token.RefreshToken),
-			db.UserServiceTokens.ExpiresAt.Set(time.Now().Add(time.Hour)),
-		).Exec(ctx)
+	_, err = initializers.DB.UserServiceTokens.CreateOne(
+		db.UserServiceTokens.AccessToken.Set(token.AccessToken),
+		db.UserServiceTokens.RefreshToken.Set(token.RefreshToken),
+		db.UserServiceTokens.ExpiresAt.Set(token.Expiry),
+		db.UserServiceTokens.User.Link(db.Users.ID.Equals(newUser.ID)),
+		db.UserServiceTokens.Service.Link(db.Services.ID.Equals(service.ID)),
+	).Exec(ctx)
+
+	if err != nil {
+		return nil, err
 	}
 
-    newUser, err := initializers.DB.Users.CreateOne(
-        db.Users.Email.Set(googleUser.Email),
-        db.Users.GoogleID.Set(googleUser.ID),
-        db.Users.Name.Set(googleUser.Name),
-        db.Users.Picture.Set(googleUser.Picture),
-        db.Users.AccessToken.Set(token.AccessToken),
-        db.Users.RefreshToken.Set(token.RefreshToken),
-    ).Exec(ctx)
-
-	return newUser, err
+	return newUser, nil
 }
 
 func GoogleLogin(ctx *gin.Context) {
@@ -108,7 +149,7 @@ func GoogleCallback(ctx *gin.Context) {
 		return
 	}
 
-	data, err := getUserDataFromGoogle(code)
+	data, err := getUserDataFromGoogle(token)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
 		return
