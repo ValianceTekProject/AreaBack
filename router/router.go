@@ -20,10 +20,8 @@ func setupProtectedRouter(router *gin.Engine) *gin.Engine {
 	protectedRoute.Use(middleware.CheckUserAccess)
 	{
 		protectedRoute.GET("/zebi", func(ctx *gin.Context) {
-			user, _ := ctx.Get("user")
 			ctx.JSON(200, gin.H{
-				"message": "Vous êtes connecté",
-				"user": user,
+				"message": "zebi I'm the route zebi",
 			})
 		})
 	}
