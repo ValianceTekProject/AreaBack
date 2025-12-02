@@ -154,7 +154,6 @@ func GoogleCallback(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
 		return
 	}
-	fmt.Fprintf(ctx.Writer, "UserInfo: %s\n", data)
 
 	var googleUser model.GoogleUserInfo
 	if err := json.Unmarshal(data, &googleUser); err != nil {

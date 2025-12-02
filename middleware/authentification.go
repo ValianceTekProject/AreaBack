@@ -1,29 +1,62 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
-	"strings"
+	"os"
+	"time"
 
+	"github.com/ValianceTekProject/AreaBack/db"
+	"github.com/ValianceTekProject/AreaBack/initializers"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 )
 
-func ValidateJWTToken(tokenString string) (string, error) {
-	return "", nil
+func ValidateJWTToken(tokenString string, ctx *gin.Context) bool {
+	secret := []byte(os.Getenv(("JWT_SECRET")))
+
+	token, _ := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
+		_, ok := token.Method.(*jwt.SigningMethodHMAC)
+		if !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+		return secret, nil
+	})
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if ok && token.Valid {
+		if float64(time.Now().Unix()) > claims["exp"].(float64) {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return false
+		}
+
+		userID := claims["sub"].(string)
+
+		user, err := initializers.DB.Users.FindUnique(
+			db.Users.ID.Equals(userID),
+		).Exec(ctx)
+
+		if err != nil || user == nil {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return false
+		}
+		ctx.Set("user", user)
+		return true
+	}
+	ctx.AbortWithStatus(http.StatusUnauthorized)
+	return false
 }
 
 func CheckUserAccess(ctx *gin.Context) {
-	authHeader := ctx.GetHeader("Authorization")
-
-	if authHeader == "" {
-		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"Error": "Authorization header is missing"})
+	token, err := ctx.Cookie("Authorization")
+	if err != nil {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
-	tokenString := strings.Split(authHeader, "Bearer ")[1]
+	validated := ValidateJWTToken(token, ctx)
 
-	_, err := ValidateJWTToken(tokenString)
-
-	if err != nil {
+	if validated != true {
 		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"Error": "Unauthorized access"})
 		return
 	}
