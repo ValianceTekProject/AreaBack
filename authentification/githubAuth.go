@@ -65,6 +65,14 @@ func GithubCallback(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"Error": "Failed to save user: " + err.Error()})
 		return
 	}
+	
+	tokenJWT, err := GenerateJWT(user.ID)
+    if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"Error": "Token generation failed: " + err.Error()})
+        return
+    }
+
+    c.SetCookie("Authorization", tokenJWT, 3600 * 24 *7, "/", "", false, true) 
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
