@@ -13,6 +13,7 @@ jobs:
         executables: 'api'
 
     Dispatch:
+      needs: [check-compilation]
       runs-on: ubuntu-latest
       if: github.ref == 'refs/heads/main'
       permissions:
