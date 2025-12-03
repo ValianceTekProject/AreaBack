@@ -9,6 +9,8 @@ import (
 func setupOAuth2Router(router *gin.Engine) *gin.Engine {
 	router.GET("/auth/google/login", authentification.GoogleLogin)
 	router.GET("/auth/google/callback", authentification.GoogleCallback)
+	router.GET("/auth/github/login", authentification.GithubLogin)
+	router.GET("/auth/github/callback", authentification.GithubCallback)
 
 
 	return router
