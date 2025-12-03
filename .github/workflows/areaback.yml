@@ -1,0 +1,13 @@
+name: continous-integration
+
+on:
+  push:
+    branches-ignore: [ga-ignore-*]
+  pull_request:
+    branches-ignore: [ga-ignore-*]
+
+jobs:
+    check-compilation:
+      uses: ./.github/workflows/check-binary.yml
+      with:
+        executables: 'api'
