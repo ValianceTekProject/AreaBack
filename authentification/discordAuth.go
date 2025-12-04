@@ -44,13 +44,13 @@ func getUserDataFromDiscord(token *oauth2.Token) ([]byte, error) {
 
 	response, err := client.Get(userInfoURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed getting user info: %s", err.Error())
+		return nil, fmt.Errorf("Failed getting user info: %s", err.Error())
 	}
 	defer response.Body.Close()
 
 	contents, err := io.ReadAll(response.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed read response: %s", err.Error())
+		return nil, fmt.Errorf("Failed read response: %s", err.Error())
 	}
 
 	return contents, nil
@@ -65,7 +65,7 @@ func saveOrUpdateDiscordUser(info model.DiscordUserInfo, token *oauth2.Token) (*
 	).Exec(ctx)
 
 	if err != nil {
-		return nil, fmt.Errorf("service '%s' not found in database", serviceName)
+		return nil, fmt.Errorf("Service '%s' not found in db", serviceName)
 	}
 
 	existingUser, err := initializers.DB.Users.FindUnique(
