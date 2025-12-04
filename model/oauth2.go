@@ -9,7 +9,16 @@ type GoogleUserInfo struct {
 }
 
 type GithubUserInfo struct {
-	ID			  int `json:"id"`
+	ID			  int    `json:"id"`
     Email         string `json:"email"`
     Name          string `json:"name"`
 }
+
+type DiscordUserInfo struct {
+	ID       string `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Verified bool   `json:"verified"`
+	Avatar   string `json:"avatar"`
+}
+
