@@ -175,12 +175,5 @@ func GoogleCallback(ctx *gin.Context) {
 
     ctx.SetCookie("Authorization", tokenJWT, 3600 * 24 *7, "/", "", false, true) 
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": "Login successful",
-        "token": tokenJWT,
-		"user": gin.H{
-			"id":    user.ID,
-			"email": user.Email,
-		},
-	})
+	ctx.Redirect(http.StatusFound, "http://localhost:8081/Dashboard")
 }
