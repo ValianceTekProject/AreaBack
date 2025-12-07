@@ -13,49 +13,60 @@ import (
 	"github.com/ValianceTekProject/AreaBack/model"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 )
 
-func getGoogleOAuthConfig() *oauth2.Config {
-	clientID := os.Getenv("GOOGLE_CLIENT_ID")
-	clientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
-	redirectURL := os.Getenv("GOOGLE_REDIRECT_URL")
+func getDiscordOAuthConfig() *oauth2.Config {
+	clientID := os.Getenv("DISCORD_CLIENT_ID")
+	clientSecret := os.Getenv("DISCORD_CLIENT_SECRET")
+	redirectURL := os.Getenv("DISCORD_REDIRECT_URL")
 
 	return &oauth2.Config{
 		RedirectURL:  redirectURL,
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		Scopes: []string{
-			"https://www.googleapis.com/auth/userinfo.email",
+			"identify",
+			"email",
 		},
-		Endpoint: google.Endpoint,
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  "https://discord.com/api/oauth2/authorize",
+			TokenURL: "https://discord.com/api/oauth2/token",
+		},
 	}
 }
 
-var googleOauthConfig *oauth2.Config = getGoogleOAuthConfig()
+var discordOauthConfig *oauth2.Config = getDiscordOAuthConfig()
 
-func getUserDataFromGoogle(token *oauth2.Token) ([]byte, error) {
-    userInfoURL := "https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken
-    response, err := http.Get(userInfoURL)
-    if err != nil {
-        return nil, fmt.Errorf("Failed getting user info: %s", err.Error())
-    }
-    defer response.Body.Close()
-    contents, err := io.ReadAll(response.Body)
-    if err != nil {
-        return nil, fmt.Errorf("Failed read response: %s", err.Error())
-    }
+func getUserDataFromDiscord(token *oauth2.Token) ([]byte, error) {
+	userInfoURL := "https://discord.com/api/users/@me"
 
-    return contents, nil
+	client := discordOauthConfig.Client(context.Background(), token)
+
+	response, err := client.Get(userInfoURL)
+	if err != nil {
+		return nil, fmt.Errorf("Failed getting user info: %s", err.Error())
+	}
+	defer response.Body.Close()
+
+	contents, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("Failed read response: %s", err.Error())
+	}
+
+	return contents, nil
 }
 
-func saveOrUpdateGoogleUser(info model.GoogleUserInfo, token *oauth2.Token) (*db.UsersModel, error) {
+func saveOrUpdateDiscordUser(info model.DiscordUserInfo, token *oauth2.Token) (*db.UsersModel, error) {
 	ctx := context.Background()
-	serviceName := "Google"
+	serviceName := "Discord"
 
-	service, _ := initializers.DB.Services.FindUnique(
+	service, err := initializers.DB.Services.FindUnique(
 		db.Services.Name.Equals(serviceName),
 	).Exec(ctx)
+
+	if err != nil {
+		return nil, fmt.Errorf("Service '%s' not found in db", serviceName)
+	}
 
 	existingUser, err := initializers.DB.Users.FindUnique(
 		db.Users.Email.Equals(info.Email),
@@ -116,14 +127,15 @@ func saveOrUpdateGoogleUser(info model.GoogleUserInfo, token *oauth2.Token) (*db
 	return newUser, nil
 }
 
-func GoogleLogin(ctx *gin.Context) {
+func DiscordLogin(ctx *gin.Context) {
 	oauthState := generateStateOauthCookie()
 	ctx.SetCookie("oauthState", oauthState, 3600, "/", "", false, true)
-	url := googleOauthConfig.AuthCodeURL(oauthState, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
+	
+	url := discordOauthConfig.AuthCodeURL(oauthState, oauth2.AccessTypeOffline)
 	ctx.Redirect(http.StatusTemporaryRedirect, url)
 }
 
-func GoogleCallback(ctx *gin.Context) {
+func DiscordCallback(ctx *gin.Context) {
 	state := ctx.Query("state")
 	code := ctx.Query("code")
 
@@ -133,41 +145,41 @@ func GoogleCallback(ctx *gin.Context) {
 		return
 	}
 
-	token, err := googleOauthConfig.Exchange(context.Background(), code)
+	token, err := discordOauthConfig.Exchange(context.Background(), code)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Code exchange failed"})
 		return
 	}
 
-	data, err := getUserDataFromGoogle(token)
+	data, err := getUserDataFromDiscord(token)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
 		return
 	}
 
-	var googleUser model.GoogleUserInfo
-	if err := json.Unmarshal(data, &googleUser); err != nil {
+	var discordUser model.DiscordUserInfo
+	if err := json.Unmarshal(data, &discordUser); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Failed to parse user data"})
 		return
 	}
 
-	user, err := saveOrUpdateGoogleUser(googleUser, token)
+	user, err := saveOrUpdateDiscordUser(discordUser, token)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Failed to save user: " + err.Error()})
 		return
 	}
 
 	tokenJWT, err := GenerateJWT(user.ID)
-    if err != nil {
+	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Token generation failed: " + err.Error()})
-        return
-    }
+		return
+	}
 
-    ctx.SetCookie("Authorization", tokenJWT, 3600 * 24 *7, "/", "", false, true) 
+	ctx.SetCookie("Authorization", tokenJWT, 3600*24*7, "/", "", false, true)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
-        "token": tokenJWT,
+		"token":   tokenJWT,
 		"user": gin.H{
 			"id":    user.ID,
 			"email": user.Email,

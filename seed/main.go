@@ -39,6 +39,22 @@ func create_github_seed(client *db.PrismaClient) {
 	}
 }
 
+func create_discord_seed(client *db.PrismaClient) {
+	ctx := context.Background()
+
+	_, err := client.Services.UpsertOne(
+		db.Services.ID.Equals(3),
+	).Create(
+		db.Services.Name.Set("Discord"),
+	).Update(
+		db.Services.Name.Set("Discord"),
+	).Exec(ctx)
+
+	if err != nil {
+		log.Fatalf("Error while seeding: %s", err)
+	}
+}
+
 func main() {
 	client := db.NewClient()
 	if err := client.Prisma.Connect(); err != nil {
@@ -48,4 +64,5 @@ func main() {
 
 	create_google_seed(client)
 	create_github_seed(client)
+	create_discord_seed(client)
 }

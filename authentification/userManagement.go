@@ -3,6 +3,8 @@ package authentification
 import (
 	"os"
 	"time"
+	"crypto/rand"
+	"encoding/base64"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -22,3 +24,12 @@ func GenerateJWT(userID string) (string, error) {
 	}
 	return token_str, nil
 }
+
+func generateStateOauthCookie() string {
+	file := make([]byte, 16)
+	rand.Read(file)
+	state := base64.URLEncoding.EncodeToString(file)
+
+	return state
+}
+
