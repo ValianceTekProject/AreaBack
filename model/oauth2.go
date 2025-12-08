@@ -21,4 +21,3 @@ type DiscordUserInfo struct {
 	Verified bool   `json:"verified"`
 	Avatar   string `json:"avatar"`
 }
-
