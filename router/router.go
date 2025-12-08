@@ -6,7 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func setupOAuth2Router(router *gin.Engine) *gin.Engine {
+func setupAuthRouter(router *gin.Engine) *gin.Engine {
+	router.GET("/auth/login", authentification.LoginHandler)
+	router.GET("/auth/register", authentification.RegisterHandler)
+
 	router.GET("/auth/google/login", authentification.GoogleLogin)
 	router.GET("/auth/google/callback", authentification.GoogleCallback)
 
@@ -15,7 +18,6 @@ func setupOAuth2Router(router *gin.Engine) *gin.Engine {
 
 	router.GET("/auth/discord/login", authentification.DiscordLogin)
 	router.GET("/auth/discord/callback", authentification.DiscordCallback)
-
 
 	return router
 }
@@ -37,7 +39,7 @@ func setupProtectedRouter(router *gin.Engine) *gin.Engine {
 func SetupRouting() {
 	router := gin.Default()
 
-	router = setupOAuth2Router(router)
+	router = setupAuthRouter(router)
 	router = setupProtectedRouter(router)
 
 	router.Run(":8080")
