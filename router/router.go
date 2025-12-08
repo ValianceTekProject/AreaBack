@@ -7,8 +7,8 @@ import (
 )
 
 func setupAuthRouter(router *gin.Engine) *gin.Engine {
-	router.GET("/auth/login", authentification.LoginHandler)
-	router.GET("/auth/register", authentification.RegisterHandler)
+	router.POST("/auth/login", authentification.LoginHandler)
+	router.POST("/auth/register", authentification.RegisterHandler)
 
 	router.GET("/auth/google/login", authentification.GoogleLogin)
 	router.GET("/auth/google/callback", authentification.GoogleCallback)
