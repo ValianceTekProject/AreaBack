@@ -22,6 +22,7 @@ var githubOauthConfig = &oauth2.Config{
 	ClientSecret: os.Getenv("GH_BASIC_SECRET_ID"),
 	Scopes: []string{
 		"user:email",
+		"repo",
 	},
 	Endpoint: github.Endpoint,
 }
@@ -53,10 +54,22 @@ func GithubCallback(c *gin.Context) {
 		c.JSON(http.StatusBadGateway, gin.H{"error": "Failed to get user information"})
 	}
 
+	email, err := getUserEmail(token)
+
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"error": "Failed to get user mail"})
+	}
+
+	fmt.Printf("Mail = %s", email)
+
 	var githubUser model.GithubUserInfo
-	if err := json.Unmarshal(data, &githubUser); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"Error": "Failed to parse user data"})
+	if json.Unmarshal(data, &githubUser) != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse user data"})
 		return
+	}
+
+	if json.Unmarshal(email, &githubUser) != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user email"})
 	}
 
 	user, err := saveOrUpdateGithubUser(githubUser, token)
@@ -88,6 +101,26 @@ func getUserData(token *oauth2.Token) ([]byte, error){
 
 	client := oauth2.NewClient(ctx, oauth2.StaticTokenSource(token))
 	userDataURL := "https://api.github.com/user"
+	req, _ := http.NewRequest("GET", userDataURL, nil)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Print("Request Failed:", err)
+		return nil, fmt.Errorf("failed to send request: %s", err.Error());
+	}
+    defer resp.Body.Close()
+    contents, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return nil, fmt.Errorf("failed read response: %s", err.Error())
+    }
+	return contents, nil
+}
+
+func getUserEmail(token *oauth2.Token) ([]byte, error) {
+	ctx := context.Background()
+
+	client := oauth2.NewClient(ctx, oauth2.StaticTokenSource(token))
+	userDataURL := "https://api.github.com/user/emails"
 	req, _ := http.NewRequest("GET", userDataURL, nil)
 	req.Header.Set("Accept", "application/vnd.github+json")
 	resp, err := client.Do(req)
