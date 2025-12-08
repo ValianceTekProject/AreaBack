@@ -175,7 +175,7 @@ func DiscordCallback(ctx *gin.Context) {
 		return
 	}
 
-	ctx.SetCookie("Authorization", tokenJWT, 3600*24*7, "/", "", false, true)
+	ctx.SetCookie("Authorization", tokenJWT, 3600 * 24 *7, "/", "", false, true)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
