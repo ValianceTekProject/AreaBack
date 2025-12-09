@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/ValianceTekProject/AreaBack/authentification"
+	controller "github.com/ValianceTekProject/AreaBack/get"
 	"github.com/ValianceTekProject/AreaBack/middleware"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -35,6 +36,8 @@ func setupAuthRouter(router *gin.Engine) *gin.Engine {
 	router.GET("/auth/discord/login", authentification.DiscordLogin)
 	router.GET("/auth/discord/callback", authentification.DiscordCallback)
 
+	router.GET("/areas")
+
 	return router
 }
 
@@ -48,6 +51,8 @@ func setupProtectedRouter(router *gin.Engine) *gin.Engine {
 				"message": "zebi I'm the route zebi",
 			})
 		})
+
+		protectedRoute.GET("/areas", controller.GetUserAreas)
 	}
 	return router
 }
