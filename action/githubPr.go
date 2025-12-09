@@ -3,6 +3,7 @@ package action
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/ValianceTekProject/AreaBack/db"
@@ -50,7 +51,7 @@ func getGithubPrWebHook(token string, ctx context.Context) {
 
 	since := time.Now().Add(-5 * time.Minute).Format(time.RFC3339)
 	query := fmt.Sprintf("is:pr author:%s is:closed closed:>%s", user.GetLogin(), since)
-	
+
 	searchOpts := &github.SearchOptions{
 		ListOptions: github.ListOptions{
 			PerPage: 100,
@@ -66,8 +67,30 @@ func getGithubPrWebHook(token string, ctx context.Context) {
 		return
 	}
 
-	fmt.Printf("Found %d closed PRs\n", results.GetTotal())
-	for _, issue := range results.Issues {
-		fmt.Printf("Closed PR: %s - %s\n", issue.GetTitle(), issue.GetHTMLURL())
+	if results.GetTotal() > 0 {
+		area, err := initializers.DB.Areas.FindUnique(
+			db.Areas.Name.Equals("Github_pr_to_discord"),
+		).With(
+			db.Areas.Actions.Fetch(),
+		).Exec(ctx)
+		if err != nil {
+			log.Printf("Error fetching area: %v", err)
+			return
+		}
+
+		actions := area.Actions()
+		for _, action := range actions {
+			_, err = initializers.DB.Actions.FindUnique(
+				db.Actions.ID.Equals(action.ID),
+			).Update(
+				db.Actions.Triggered.Set(true),
+			).Exec(ctx)
+
+			if err != nil {
+				log.Printf("Error triggering action %s: %v", action.ID, err)
+			} else {
+				fmt.Printf("Action %s triggered!\n", action.ID)
+			}
+		}
 	}
 }
