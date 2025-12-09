@@ -8,6 +8,7 @@ import (
 
 	"github.com/ValianceTekProject/AreaBack/db"
 	"github.com/ValianceTekProject/AreaBack/initializers"
+	"github.com/ValianceTekProject/AreaBack/reaction"
 )
 
 func Listener() {
@@ -45,6 +46,10 @@ func Listener() {
 								).Update(
 									db.Actions.Triggered.Set(false),
 								).Exec(ctx)
+								
+								for _, user := range users {
+									reaction.ReactWithDiscordMsg(user)
+								}
 								if err != nil {
 									log.Printf("Error resetting action trigger: %v", err)
 								}

@@ -10,18 +10,8 @@ import (
 	"github.com/ValianceTekProject/AreaBack/model"
 )
 
-func ReactWithDiscordMsg(user db.UsersModel, reaction db.ReactionsModel) {
-	// configJSON, ok := reaction.Config()
-	// if !ok {
-	// 	fmt.Println("Error: No config found")
-	// 	return
-	// }
-	//
+func ReactWithDiscordMsg(user db.UsersModel) {
 	var config model.DiscordConfig
-	// if err := json.Unmarshal(configJSON, &config); err != nil {
-	// 	fmt.Printf("Error unmarshaling config %s\n", err.Error())
-	// 	return
-	// }
 
 	config.WebhookURL = "https://discord.com/api/webhooks/1447899360145965127/NNlPLGO08_jbI1Pz0SED7wFqtsYvK4H93xG_v6Z25VZEuDd090IkvfpicUOFak9U5bPz"
 
