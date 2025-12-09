@@ -1,10 +1,26 @@
 package router
 
 import (
+	"time"
+
 	"github.com/ValianceTekProject/AreaBack/authentification"
 	"github.com/ValianceTekProject/AreaBack/middleware"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
+
+func setupCORS(router *gin.Engine) {
+	config := cors.Config{
+		AllowOrigins:     []string{"http://localhost:8081"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}
+	
+	router.Use(cors.New(config))
+}
 
 func setupAuthRouter(router *gin.Engine) *gin.Engine {
 	router.POST("/auth/login", authentification.LoginHandler)
@@ -39,6 +55,7 @@ func setupProtectedRouter(router *gin.Engine) *gin.Engine {
 func SetupRouting() {
 	router := gin.Default()
 
+	setupCORS(router)
 	router = setupAuthRouter(router)
 	router = setupProtectedRouter(router)
 
