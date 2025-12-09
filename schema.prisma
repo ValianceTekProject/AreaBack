@@ -50,13 +50,12 @@ model UserServiceTokens {
 
 model Areas {
   id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  name      String
+  name      String   @unique
   isEnabled Boolean  @default(true) @map("is_enabled")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   
-  user      Users       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      Users[]
   actions   Actions[]
   reactions Reactions[]
 
@@ -67,9 +66,8 @@ model Actions {
   id              String    @id @default(uuid()) @db.Uuid
   areaId          String    @map("area_id") @db.Uuid
   serviceId       Int       @map("service_id")
-  type            String
-  config          Json      @db.JsonB
-  lastTriggeredAt DateTime? @map("last_triggered_at")
+  config          Json?     @db.JsonB
+  Triggered       Boolean
   lastState       Json?     @map("last_state") @db.JsonB
   
   area    Areas    @relation(fields: [areaId], references: [id], onDelete: Cascade)
@@ -82,8 +80,7 @@ model Reactions {
   id        String @id @default(uuid()) @db.Uuid
   areaId    String @map("area_id") @db.Uuid
   serviceId Int    @map("service_id")
-  type      String
-  config    Json   @db.JsonB
+  config    Json?  @db.JsonB
   
   area    Areas    @relation(fields: [areaId], references: [id], onDelete: Cascade)
   service Services @relation(fields: [serviceId], references: [id], onDelete: Cascade)
