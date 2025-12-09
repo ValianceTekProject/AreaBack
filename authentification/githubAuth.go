@@ -54,13 +54,11 @@ func GithubCallback(c *gin.Context) {
 		c.JSON(http.StatusBadGateway, gin.H{"error": "Failed to get user information"})
 	}
 
-	email, err := getUserEmail(token)
+	emailData, err := getUserEmail(token)
 
 	if err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{"error": "Failed to get user mail"})
 	}
-
-	fmt.Printf("Mail = %s", email)
 
 	var githubUser model.GithubUserInfo
 	if json.Unmarshal(data, &githubUser) != nil {
@@ -68,8 +66,23 @@ func GithubCallback(c *gin.Context) {
 		return
 	}
 
-	if json.Unmarshal(email, &githubUser) != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user email"})
+	var emails []struct {
+    	Email      string `json:"email"`
+    	Primary    bool   `json:"primary"`
+    	Verified   bool   `json:"verified"`
+    	Visibility string `json:"visibility"`
+	}
+
+	if err := json.Unmarshal(emailData, &emails); err != nil {
+    	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse user email"})
+    	return
+	}
+
+	for _, e := range emails {
+    if e.Primary && e.Verified {
+        githubUser.Email = e.Email
+        break
+    	}
 	}
 
 	user, err := saveOrUpdateGithubUser(githubUser, token)
