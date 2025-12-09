@@ -74,13 +74,7 @@ func GithubCallback(c *gin.Context) {
 
     c.SetCookie("Authorization", tokenJWT, 3600 * 24 *7, "/", "", false, true) 
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Login successful",
-		"user": gin.H{
-			"id":    user.ID,
-			"email": user.Email,
-		},
-	})
+	c.Redirect(http.StatusFound, "http://localhost:8081/Dashboard")
 }
 
 func getUserData(token *oauth2.Token) ([]byte, error){
