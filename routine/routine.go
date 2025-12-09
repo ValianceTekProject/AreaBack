@@ -6,6 +6,7 @@ import (
 
 	"github.com/ValianceTekProject/AreaBack/action"
 	"github.com/ValianceTekProject/AreaBack/initializers"
+	"github.com/ValianceTekProject/AreaBack/reaction"
 )
 
 func LaunchRoutines() {
