@@ -212,6 +212,6 @@ func saveOrUpdateGithubUser(info model.GithubUserInfo, token *oauth2.Token) (*db
 	if err != nil {
 		return nil, err
 	}
-
+	LinkAllUsersToAreas()
 	return newUser, nil
 }
