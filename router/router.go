@@ -36,8 +36,6 @@ func setupAuthRouter(router *gin.Engine) *gin.Engine {
 	router.GET("/auth/discord/login", authentification.DiscordLogin)
 	router.GET("/auth/discord/callback", authentification.DiscordCallback)
 
-	router.GET("/areas")
-
 	return router
 }
 
