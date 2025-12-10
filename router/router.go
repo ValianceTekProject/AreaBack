@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/ValianceTekProject/AreaBack/authentification"
+	"github.com/ValianceTekProject/AreaBack/controller"
 	"github.com/ValianceTekProject/AreaBack/middleware"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -18,7 +19,7 @@ func setupCORS(router *gin.Engine) {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}
-	
+
 	router.Use(cors.New(config))
 }
 
@@ -39,7 +40,7 @@ func setupAuthRouter(router *gin.Engine) *gin.Engine {
 }
 
 func setupProtectedRouter(router *gin.Engine) *gin.Engine {
-	protectedRoute := router.Group("/", )
+	protectedRoute := router.Group("/")
 
 	protectedRoute.Use(middleware.CheckUserAccess)
 	{
@@ -48,6 +49,9 @@ func setupProtectedRouter(router *gin.Engine) *gin.Engine {
 				"message": "zebi I'm the route zebi",
 			})
 		})
+
+		protectedRoute.GET("/areas", controller.GetUserAreas)
+		protectedRoute.PATCH("/areas/:areaId/status", controller.UpdateAreaStatus)
 	}
 	return router
 }
