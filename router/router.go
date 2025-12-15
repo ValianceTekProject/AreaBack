@@ -53,7 +53,7 @@ func setupProtectedRouter(router *gin.Engine) *gin.Engine {
 			})
 		})
 
-		protectedRoute.GET("/areas", controller.GetUserAreas)
+		// protectedRoute.GET("/areas", controller.GetUserAreas)
 		protectedRoute.PATCH("/areas/:areaId/status", controller.UpdateAreaStatus)
 	}
 	return router

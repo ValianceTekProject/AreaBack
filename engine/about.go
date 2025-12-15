@@ -1,56 +1,36 @@
 package engine
 
 import (
-	"context"
+	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/ValianceTekProject/AreaBack/db"
-	"github.com/ValianceTekProject/AreaBack/initializers"
 	"github.com/ValianceTekProject/AreaBack/model"
+	"github.com/ValianceTekProject/AreaBack/templates"
 	"github.com/gin-gonic/gin"
 )
 
 func GetAbout(c *gin.Context) {
-	ctx := context.Background()
+	availableServices := templates.Services
+	fmt.Printf("Len available service %d", len(availableServices))
+	servicesResponse := []model.ServiceResponse{}
 
-	services, err := initializers.DB.Services.FindMany().With(
-		db.Services.Actions.Fetch(),
-		db.Services.Reactions.Fetch(),
-	).Exec(ctx)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch services"})
-		return
-	}
-
-	var serviceResponses []model.ServiceResponse
-	for _, service := range services {
-		var actions []model.ActionResponse
-		var reactions []model.ReactionResponse
-
-		if service.Actions() != nil {
-			for _, action := range service.Actions() {
-				actions = append(actions, model.ActionResponse{
-					Name:        action.ID,
-					Description: "Action description",
-				})
-			}
+	for _, service := range availableServices {
+		services := model.ServiceResponse{}
+		services.Name = service.Name;
+		for _, action := range service.Actions {
+			newAction := model.ActionResponse{}
+			newAction.Name = action.Name
+			newAction.Description = action.Description
+			services.Actions = append(services.Actions, newAction)
 		}
-
-		if service.Reactions() != nil {
-			for _, reaction := range service.Reactions() {
-				reactions = append(reactions, model.ReactionResponse{
-					Name:        reaction.ID,
-					Description: "Reaction description",
-				})
-			}
+		for _, reaction := range service.Reactions {
+			newReaction := model.ReactionResponse{}
+			newReaction.Name = reaction.Name
+			newReaction.Description = reaction.Description
+			services.Reactions = append(services.Reactions, newReaction)
 		}
-
-		serviceResponses = append(serviceResponses, model.ServiceResponse{
-			Name:      service.Name,
-			Actions:   actions,
-			Reactions: reactions,
-		})
+		servicesResponse = append(servicesResponse, services)
 	}
 
 	response := model.AboutResponse{
@@ -59,7 +39,7 @@ func GetAbout(c *gin.Context) {
 		},
 		Server: model.ServerResponse{
 			CurrentTime: time.Now().Unix(),
-			Services:    serviceResponses,
+			Services:    servicesResponse,
 		},
 	}
 
