@@ -98,10 +98,9 @@ func GithubCallback(c *gin.Context) {
         return
     }
 
-    c.SetCookie("Authorization", tokenJWT, 3600 * 24 *7, "/", "", false, true) 
-
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
+		"token": tokenJWT,
 		"user": gin.H{
 			"id":    user.ID,
 			"email": user.Email,

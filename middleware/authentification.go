@@ -48,11 +48,19 @@ func ValidateJWTToken(tokenString string, ctx *gin.Context) bool {
 }
 
 func CheckUserAccess(ctx *gin.Context) {
-	token, err := ctx.Cookie("Authorization")
-	if err != nil {
+	authHeader := ctx.GetHeader("Authorization")
+	if authHeader == "" {
 		ctx.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
+	
+	const bearerPrefix = "Bearer "
+	if len(authHeader) < len(bearerPrefix) || authHeader[:len(bearerPrefix)] != bearerPrefix {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+	
+	token := authHeader[len(bearerPrefix):]
 
 	validated := ValidateJWTToken(token, ctx)
 

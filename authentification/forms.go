@@ -82,8 +82,6 @@ func LoginHandler(ctx *gin.Context){
 		return
 	}
 	
-	ctx.SetCookie("Authorization", tokenJWT, 3600 * 24 * 7, "/", "", false, true)
-	
 	LinkAllUsersToAreas()
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
