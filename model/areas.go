@@ -49,3 +49,12 @@ type Reactions struct {
 type AreaUpdateStatusPayload struct {
 	IsEnabled bool `json:"is_enabled"`
 }
+
+type AreaInput struct {
+	Name string `json:"name"`
+}
+
+type AddAction struct {
+	Name string `json:"name"`
+	ServiceName string `json:"service_name"`
+}

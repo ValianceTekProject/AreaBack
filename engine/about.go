@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -12,7 +11,6 @@ import (
 
 func GetAbout(c *gin.Context) {
 	availableServices := templates.Services
-	fmt.Printf("Len available service %d", len(availableServices))
 	servicesResponse := []model.ServiceResponse{}
 
 	for _, service := range availableServices {

@@ -70,8 +70,8 @@ model Actions {
   areaId          String    @map("area_id") @db.Uuid
   serviceId       Int       @map("service_id")
   type            String
-  config          Json      @db.JsonB
-  Triggered       Boolean
+  config          Json?      @db.JsonB
+  triggered       Boolean   @default(false)
   lastState       Json?     @map("last_state") @db.JsonB
   
   area    Areas    @relation(fields: [areaId], references: [id], onDelete: Cascade)
@@ -85,7 +85,7 @@ model Reactions {
   areaId    String @map("area_id") @db.Uuid
   serviceId Int    @map("service_id")
   type            String
-  config    Json   @db.JsonB
+  config    Json?   @db.JsonB
   
   area    Areas    @relation(fields: [areaId], references: [id], onDelete: Cascade)
   service Services @relation(fields: [serviceId], references: [id], onDelete: Cascade)

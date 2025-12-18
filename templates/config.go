@@ -30,15 +30,15 @@ type ReactionDefinition struct {
 
 type Service struct {
 	Name      string
-	Actions   []ActionDefinition
-	Reactions []ReactionDefinition
+	Actions   map[string]*ActionDefinition
+	Reactions map[string]*ReactionDefinition
 }
 
-var Services = []Service{
-	{
+var Services = map[string]*Service{
+	"Github": {
 		Name: "Github",
-		Actions: []ActionDefinition{
-			{
+		Actions: map[string]*ActionDefinition{
+			"github_new_issue": {
 				Name:        "github_new_issue",
 				Description: "New issue",
 				Service:     "Github",
@@ -57,7 +57,7 @@ var Services = []Service{
 					},
 				},
 			},
-			{
+			"github_new_PR": {
 				Name:        "github_new_PR",
 				Description: "New PR",
 				Service:     "Github",
@@ -77,12 +77,12 @@ var Services = []Service{
 				},
 			},
 		},
-		Reactions: []ReactionDefinition{},
+		Reactions: map[string]*ReactionDefinition{},
 	},
-	{
+	"Discord": {
 		Name: "Discord",
-		Actions: []ActionDefinition{
-			{
+		Actions: map[string]*ActionDefinition{
+			"discord_message_received": {
 				Name:        "discord_message_received",
 				Description: "Message received in a specific channel",
 				Service:     "Discord",
@@ -96,8 +96,8 @@ var Services = []Service{
 				},
 			},
 		},
-		Reactions: []ReactionDefinition{
-			{
+		Reactions: map[string]*ReactionDefinition{
+			"discord_send_message": {
 				Name:        "discord_send_message",
 				Description: "Send a message to a channel",
 				Service:     "Discord",
@@ -118,4 +118,27 @@ var Services = []Service{
 			},
 		},
 	},
+}
+
+func GetService(name string) (*Service, bool) {
+	service, exists := Services[name]
+	return service, exists
+}
+
+func GetAction(serviceName, actionName string) (*ActionDefinition, bool) {
+	service, exists := Services[serviceName]
+	if !exists {
+		return nil, false
+	}
+	action, exists := service.Actions[actionName]
+	return action, exists
+}
+
+func GetReaction(serviceName, reactionName string) (*ReactionDefinition, bool) {
+	service, exists := Services[serviceName]
+	if !exists {
+		return nil, false
+	}
+	reaction, exists := service.Reactions[reactionName]
+	return reaction, exists
 }
