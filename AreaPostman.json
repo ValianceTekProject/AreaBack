@@ -110,6 +110,22 @@
 				"header": []
 			},
 			"response": []
+		},
+		{
+			"name": "createArea",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "add Action",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
 		}
 	],
 	"variable": [
