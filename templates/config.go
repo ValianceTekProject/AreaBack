@@ -1,0 +1,144 @@
+package templates
+
+type ActionField struct {
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	Label    string `json:"label"`
+	Required bool   `json:"required"`
+}
+
+type ReactionField struct {
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	Label    string `json:"label"`
+	Required bool   `json:"required"`
+}
+
+type ActionDefinition struct {
+	Name        string
+	Description string
+	Service     string
+	Config      []ActionField
+}
+
+type ReactionDefinition struct {
+	Name        string
+	Description string
+	Service     string
+	Config      []ReactionField
+}
+
+type Service struct {
+	Name      string
+	Actions   map[string]*ActionDefinition
+	Reactions map[string]*ReactionDefinition
+}
+
+var Services = map[string]*Service{
+	"Github": {
+		Name: "Github",
+		Actions: map[string]*ActionDefinition{
+			"github_new_issue": {
+				Name:        "github_new_issue",
+				Description: "New issue",
+				Service:     "Github",
+				Config: []ActionField{
+					{
+						Name:     "owner",
+						Type:     "text",
+						Label:    "Repository Owner",
+						Required: true,
+					},
+					{
+						Name:     "repo",
+						Type:     "text",
+						Label:    "Repository Name",
+						Required: true,
+					},
+				},
+			},
+			"github_new_PR": {
+				Name:        "github_new_PR",
+				Description: "New PR",
+				Service:     "Github",
+				Config: []ActionField{
+					{
+						Name:     "owner",
+						Type:     "text",
+						Label:    "Repository Owner",
+						Required: true,
+					},
+					{
+						Name:     "repo",
+						Type:     "text",
+						Label:    "Repository Name",
+						Required: true,
+					},
+				},
+			},
+		},
+		Reactions: map[string]*ReactionDefinition{},
+	},
+	"Discord": {
+		Name: "Discord",
+		Actions: map[string]*ActionDefinition{
+			"discord_message_received": {
+				Name:        "discord_message_received",
+				Description: "Message received in a specific channel",
+				Service:     "Discord",
+				Config: []ActionField{
+					{
+						Name:     "channel_id",
+						Type:     "text",
+						Label:    "Channel ID",
+						Required: true,
+					},
+				},
+			},
+		},
+		Reactions: map[string]*ReactionDefinition{
+			"discord_send_message": {
+				Name:        "discord_send_message",
+				Description: "Send a message to a channel",
+				Service:     "Discord",
+				Config: []ReactionField{
+					{
+						Name:     "channel_id",
+						Type:     "text",
+						Label:    "Channel ID",
+						Required: true,
+					},
+					{
+						Name:     "content",
+						Type:     "text",
+						Label:    "Message Content",
+						Required: true,
+					},
+				},
+			},
+		},
+	},
+}
+
+func GetService(name string) (*Service, bool) {
+	service, exists := Services[name]
+	return service, exists
+}
+
+func GetAction(serviceName, actionName string) (*ActionDefinition, bool) {
+	service, exists := Services[serviceName]
+	if !exists {
+		return nil, false
+	}
+	action, exists := service.Actions[actionName]
+	return action, exists
+}
+
+func GetReaction(serviceName, reactionName string) (*ReactionDefinition, bool) {
+	service, exists := Services[serviceName]
+	if !exists {
+		return nil, false
+	}
+	reaction, exists := service.Reactions[reactionName]
+	return reaction, exists
+}

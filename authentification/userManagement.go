@@ -1,61 +1,61 @@
 package authentification
 
 import (
-	"context"
+	// "context"
 	"crypto/rand"
 	"encoding/base64"
-	"log"
+	// "log"
 	"os"
 	"time"
 
-	"github.com/ValianceTekProject/AreaBack/db"
-	"github.com/ValianceTekProject/AreaBack/initializers"
+	// "github.com/ValianceTekProject/AreaBack/db"
+	// "github.com/ValianceTekProject/AreaBack/initializers"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 func LinkAllUsersToAreas() error {
-	ctx := context.Background()
-	
-	areas, err := initializers.DB.Areas.FindMany().With(
-		db.Areas.User.Fetch(),
-	).Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	users, err := initializers.DB.Users.FindMany().Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	for _, area := range areas {
-		existingUsers := make(map[string]bool)
-		for _, u := range area.User() {
-			existingUsers[u.ID] = true
-		}
-		
-		var updates []db.AreasSetParam
-		for _, user := range users {
-			if !existingUsers[user.ID] {
-				updates = append(updates, 
-					db.Areas.User.Link(
-						db.Users.ID.Equals(user.ID),
-					),
-				)
-			}
-		}
-		
-		if len(updates) > 0 {
-			_, err = initializers.DB.Areas.FindUnique(
-				db.Areas.ID.Equals(area.ID),
-			).Update(updates...).Exec(ctx)
-			
-			if err != nil {
-				log.Printf("error linking users to area %s: %v", area.ID, err)
-			}
-		}
-	}
-	
+	// ctx := context.Background()
+	//
+	// areas, err := initializers.DB.Areas.FindMany().With(
+	// 	db.Areas.User.Fetch(),
+	// ).Exec(ctx)
+	// if err != nil {
+	// 	return err
+	// }
+	//
+	// users, err := initializers.DB.Users.FindMany().Exec(ctx)
+	// if err != nil {
+	// 	return err
+	// }
+	//
+	// for _, area := range areas {
+	// 	existingUsers := make(map[string]bool)
+	// 	for _, u := range area.User() {
+	// 		existingUsers[u.ID] = true
+	// 	}
+	//
+	// 	var updates []db.AreasSetParam
+	// 	for _, user := range users {
+	// 		if !existingUsers[user.ID] {
+	// 			updates = append(updates, 
+	// 				db.Areas.User.Link(
+	// 					db.Users.ID.Equals(user.ID),
+	// 				),
+	// 			)
+	// 		}
+	// 	}
+	//
+	// 	if len(updates) > 0 {
+	// 		_, err = initializers.DB.Areas.FindUnique(
+	// 			db.Areas.ID.Equals(area.ID),
+	// 		).Update(updates...).Exec(ctx)
+	//
+	// 		if err != nil {
+	// 			log.Printf("error linking users to area %s: %v", area.ID, err)
+	// 		}
+	// 	}
+	// }
+	//
 	return nil
 }
 

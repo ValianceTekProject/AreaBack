@@ -52,9 +52,11 @@ func setupProtectedRouter(router *gin.Engine) *gin.Engine {
 				"message": "zebi I'm the route zebi",
 			})
 		})
+		protectedRoute.POST("/areas/create", controller.CreateArea)
 
 		protectedRoute.GET("/areas", controller.GetUserAreas)
 		protectedRoute.PATCH("/areas/:areaId/status", controller.UpdateAreaStatus)
+		protectedRoute.POST("/areas/:areaId/action/add", controller.LinkAction)
 	}
 	return router
 }
