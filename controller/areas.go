@@ -126,6 +126,58 @@ func LinkAction(ctx *gin.Context) {
 	).Exec(ctx)
 }
 
+func LinkReaction(ctx *gin.Context) {
+	areaID := ctx.Param("areaId")
+	if areaID == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Area ID is required"})
+		return
+	}
+
+	userInterface, exists := ctx.Get("user")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		return
+	}
+
+	user, ok := userInterface.(*db.UsersModel)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user type"})
+		return
+	}
+
+	var addAction model.AddAction
+
+	if err := ctx.ShouldBindJSON(&addAction); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
+		return
+	}
+
+	action, exists := templates.GetReaction(addAction.ServiceName, addAction.Name)
+	if !exists {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Action not found"})
+		return
+	}
+
+	area, err := initializers.DB.Areas.FindFirst(
+		db.Areas.ID.Equals(areaID),
+		db.Areas.UserID.Equals(user.ID),
+	).Exec(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Area not found or unauthorized"})
+		return
+	}
+
+	initializers.DB.Reactions.CreateOne(
+		db.Reactions.Type.Set(action.Name),
+		db.Reactions.Area.Link(
+			db.Areas.ID.Equals(area.ID),
+		),
+		db.Reactions.Service.Link(
+			db.Services.Name.Equals(addAction.ServiceName),
+		),
+	).Exec(ctx)
+}
+
 func UpdateAreaStatus(ctx *gin.Context) {
 	// areaID := ctx.Param("areaId")
 	// if areaID == "" {
