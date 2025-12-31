@@ -58,8 +58,8 @@ model Areas {
   userId    String   @map("user_id") @db.Uuid
   user      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  actions   Actions[]
-  reactions Reactions[]
+  action    Actions?
+  reaction  Reactions?
 
   @@unique([userId, name])
   @@map("areas")
@@ -67,7 +67,7 @@ model Areas {
 
 model Actions {
   id              String    @id @default(uuid()) @db.Uuid
-  areaId          String    @map("area_id") @db.Uuid
+  areaId          String    @map("area_id") @db.Uuid @unique
   serviceId       Int       @map("service_id")
   type            String
   config          Json?      @db.JsonB
@@ -82,7 +82,7 @@ model Actions {
 
 model Reactions {
   id        String @id @default(uuid()) @db.Uuid
-  areaId    String @map("area_id") @db.Uuid
+  areaId    String @map("area_id") @db.Uuid @unique
   serviceId Int    @map("service_id")
   type            String
   config    Json?   @db.JsonB
