@@ -1,5 +1,10 @@
 package templates
 
+import "github.com/ValianceTekProject/AreaBack/reaction"
+
+type ActionHandler func(config map[string]any) error
+type ReactionHandler func(config map[string]any) error
+
 type ActionField struct {
 	Name     string `json:"name"`
 	Type     string `json:"type"`
@@ -19,6 +24,7 @@ type ActionDefinition struct {
 	Description string
 	Service     string
 	Config      []ActionField
+	Handler		ActionHandler
 }
 
 type ReactionDefinition struct {
@@ -26,6 +32,7 @@ type ReactionDefinition struct {
 	Description string
 	Service     string
 	Config      []ReactionField
+	Handler		ReactionHandler
 }
 
 type Service struct {
@@ -33,6 +40,7 @@ type Service struct {
 	Actions   map[string]*ActionDefinition
 	Reactions map[string]*ReactionDefinition
 }
+
 
 var Services = map[string]*Service{
 	"Github": {
@@ -115,6 +123,7 @@ var Services = map[string]*Service{
 						Required: true,
 					},
 				},
+				Handler: reaction.ReactWithDiscordMsg,
 			},
 		},
 	},
@@ -141,4 +150,28 @@ func GetReaction(serviceName, reactionName string) (*ReactionDefinition, bool) {
 	}
 	reaction, exists := service.Reactions[reactionName]
 	return reaction, exists
+}
+
+func GetReactionHandler(serviceName, reactionName string) (ReactionHandler, bool) {
+	service, exists := Services[serviceName]
+	if !exists {
+		return nil, false
+	}
+	reaction, exists := service.Reactions[reactionName]
+	if !exists {
+		return nil, false
+	}
+	return reaction.Handler, true
+}
+
+func GetActionHandler(serviceName, actionName string) (ActionHandler, bool) {
+	service, exists := Services[serviceName]
+	if !exists {
+		return nil, false
+	}
+	action, exists := service.Actions[actionName]
+	if !exists {
+		return nil, false
+	}
+	return action.Handler, true
 }

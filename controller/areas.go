@@ -26,8 +26,8 @@ func GetUserAreas(ctx *gin.Context) {
 	areas, err := initializers.DB.Areas.FindMany(
 		db.Areas.UserID.Equals(user.ID),
 	).With(
-		db.Areas.Actions.Fetch(),
-		db.Areas.Reactions.Fetch(),
+		db.Areas.Action.Fetch(),
+		db.Areas.Reaction.Fetch(),
 	).Exec(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Failed to fetch areas"})
