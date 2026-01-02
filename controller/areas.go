@@ -179,28 +179,28 @@ func LinkReaction(ctx *gin.Context) {
 }
 
 func UpdateAreaStatus(ctx *gin.Context) {
-	// areaID := ctx.Param("areaId")
-	// if areaID == "" {
-	// 	ctx.JSON(http.StatusBadRequest, gin.H{"error": "Area ID is required"})
-	// 	return
-	// }
-	//
-	// var payload model.AreaUpdateStatusPayload
-	// if err := ctx.ShouldBindJSON(&payload); err != nil {
-	// 	ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
-	// 	return
-	// }
-	//
-	// updatedArea, err := initializers.DB.Areas.FindUnique(
-	// 	db.Areas.ID.Equals(areaID),
-	// ).Update(
-	// 	db.Areas.IsEnabled.Set(payload.IsEnabled),
-	// ).Exec(ctx)
-	//
-	// if err != nil {
-	// 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update area status", "details": err.Error()})
-	// 	return
-	// }
-	//
-	// ctx.JSON(http.StatusOK, updatedArea)
+	areaID := ctx.Param("areaId")
+	if areaID == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Area ID is required"})
+		return
+	}
+
+	var payload model.AreaUpdateStatusPayload
+	if err := ctx.ShouldBindJSON(&payload); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
+		return
+	}
+
+	updatedArea, err := initializers.DB.Areas.FindUnique(
+		db.Areas.ID.Equals(areaID),
+	).Update(
+		db.Areas.IsEnabled.Set(payload.IsEnabled),
+	).Exec(ctx)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update area status", "details": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, updatedArea)
 }
