@@ -41,15 +41,13 @@ func Listener() {
 }
 
 func handleEnableArea(area *db.AreasModel, ctx context.Context) {
-	action, err := area.Action()
-	if !err {
-		log.Printf("Error while fetching action: %v", err)
+	action, exist := area.Action()
+	if !exist {
 		return
 	}
 	
-	reaction, err := area.Reaction()
-	if !err {
-		log.Printf("Error while fetching reaction: %v", err)
+	reaction, exist := area.Reaction()
+	if !exist {
 		return
 	}
 	service := reaction.Service()
