@@ -41,10 +41,14 @@ model UserServiceTokens {
   refreshToken String   @map("refresh_token")
   expiresAt    DateTime @map("expires_at")
   metadata     Json?    @db.JsonB
+
+  providerId   String?  @map("provider_id")
+  providerEmail String? @map("provider_email")
   
   user    Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
   service Services @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
+  @@unique([serviceId, providerId])
   @@map("user_service_tokens")
 }
 
