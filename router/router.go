@@ -25,16 +25,22 @@ func setupCORS(router *gin.Engine) {
 }
 
 func setupAuthRouter(router *gin.Engine) *gin.Engine {
+	oauthRoute := router.Group("/")
+
+	oauthRoute.Use(middleware.VerifyOauthUser)
+	{
+		oauthRoute.GET("/auth/google/login", authentification.GoogleLogin)
+		oauthRoute.GET("/auth/github/login", authentification.GithubLogin)
+		oauthRoute.GET("/auth/discord/login", authentification.DiscordLogin)
+	}
+
 	router.POST("/auth/login", authentification.LoginHandler)
 	router.POST("/auth/register", authentification.RegisterHandler)
 
-	router.GET("/auth/google/login", authentification.GoogleLogin)
 	router.GET("/auth/google/callback", authentification.GoogleCallback)
 
-	router.GET("/auth/github/login", authentification.GithubLogin)
 	router.GET("/auth/github/callback", authentification.GithubCallback)
 
-	router.GET("/auth/discord/login", authentification.DiscordLogin)
 	router.GET("/auth/discord/callback", authentification.DiscordCallback)
 
 	router.GET("/about.json", engine.GetAbout)
