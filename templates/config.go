@@ -1,6 +1,9 @@
 package templates
 
-import "github.com/ValianceTekProject/AreaBack/reaction"
+import (
+	"github.com/ValianceTekProject/AreaBack/action"
+	"github.com/ValianceTekProject/AreaBack/reaction"
+)
 
 type ActionHandler func(config map[string]any) error
 type ReactionHandler func(config map[string]any) error
@@ -64,6 +67,7 @@ var Services = map[string]*Service{
 						Required: true,
 					},
 				},
+				Handler: action.GetGithubWebHook,
 			},
 			"github_new_PR": {
 				Name:        "github_new_PR",
