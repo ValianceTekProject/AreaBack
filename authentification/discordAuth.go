@@ -56,16 +56,66 @@ func getUserDataFromDiscord(token *oauth2.Token) ([]byte, error) {
 	return contents, nil
 }
 
-func saveOrUpdateDiscordUser(info model.DiscordUserInfo, token *oauth2.Token) (*db.UsersModel, error) {
+func saveOrUpdateDiscordUser(info model.DiscordUserInfo, token *oauth2.Token, existingUserID *string) (*db.UsersModel, error) {
 	ctx := context.Background()
 	serviceName := "Discord"
 
 	service, err := initializers.DB.Services.FindUnique(
 		db.Services.Name.Equals(serviceName),
 	).Exec(ctx)
-
 	if err != nil {
-		return nil, fmt.Errorf("Service '%s' not found in db", serviceName)
+		return nil, fmt.Errorf("service not found: %s", err.Error())
+	}
+
+	if existingUserID != nil && *existingUserID != "" {
+		existingUser, err := initializers.DB.Users.FindUnique(
+			db.Users.ID.Equals(*existingUserID),
+		).Exec(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("user not found: %s", err.Error())
+		}
+
+		existingToken, _ := initializers.DB.UserServiceTokens.FindFirst(
+			db.UserServiceTokens.ServiceID.Equals(service.ID),
+			db.UserServiceTokens.ProviderID.Equals(info.ID),
+		).With(
+			db.UserServiceTokens.User.Fetch(),
+		).Exec(ctx)
+
+		if existingToken != nil && existingToken.UserID != *existingUserID {
+			return nil, fmt.Errorf("this Discord account is already linked to another user")
+		}
+
+		userDiscordToken, _ := initializers.DB.UserServiceTokens.FindFirst(
+			db.UserServiceTokens.UserID.Equals(*existingUserID),
+			db.UserServiceTokens.ServiceID.Equals(service.ID),
+		).Exec(ctx)
+
+		if userDiscordToken != nil {
+			_, err = initializers.DB.UserServiceTokens.FindUnique(
+				db.UserServiceTokens.ID.Equals(userDiscordToken.ID),
+			).Update(
+				db.UserServiceTokens.AccessToken.Set(token.AccessToken),
+				db.UserServiceTokens.RefreshToken.Set(token.RefreshToken),
+				db.UserServiceTokens.ExpiresAt.Set(token.Expiry),
+				db.UserServiceTokens.ProviderID.Set(info.ID),
+			).Exec(ctx)
+		} else {
+			_, err = initializers.DB.UserServiceTokens.CreateOne(
+				db.UserServiceTokens.AccessToken.Set(token.AccessToken),
+				db.UserServiceTokens.RefreshToken.Set(token.RefreshToken),
+				db.UserServiceTokens.ExpiresAt.Set(token.Expiry),
+				db.UserServiceTokens.User.Link(db.Users.ID.Equals(*existingUserID)),
+				db.UserServiceTokens.Service.Link(db.Services.ID.Equals(service.ID)),
+				db.UserServiceTokens.ProviderID.Set(info.ID),
+			).Exec(ctx)
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		return existingUser, nil
 	}
 
 	existingUser, err := initializers.DB.Users.FindUnique(
@@ -85,6 +135,7 @@ func saveOrUpdateDiscordUser(info model.DiscordUserInfo, token *oauth2.Token) (*
 				db.UserServiceTokens.AccessToken.Set(token.AccessToken),
 				db.UserServiceTokens.RefreshToken.Set(token.RefreshToken),
 				db.UserServiceTokens.ExpiresAt.Set(token.Expiry),
+				db.UserServiceTokens.ProviderID.Set(info.ID),
 			).Exec(ctx)
 		} else {
 			_, err = initializers.DB.UserServiceTokens.CreateOne(
@@ -93,6 +144,7 @@ func saveOrUpdateDiscordUser(info model.DiscordUserInfo, token *oauth2.Token) (*
 				db.UserServiceTokens.ExpiresAt.Set(token.Expiry),
 				db.UserServiceTokens.User.Link(db.Users.ID.Equals(existingUser.ID)),
 				db.UserServiceTokens.Service.Link(db.Services.ID.Equals(service.ID)),
+				db.UserServiceTokens.ProviderID.Set(info.ID),
 			).Exec(ctx)
 		}
 
@@ -107,7 +159,6 @@ func saveOrUpdateDiscordUser(info model.DiscordUserInfo, token *oauth2.Token) (*
 		db.Users.Email.Set(info.Email),
 		db.Users.PasswordHash.Set(""),
 	).Exec(ctx)
-
 	if err != nil {
 		return nil, err
 	}
@@ -118,8 +169,8 @@ func saveOrUpdateDiscordUser(info model.DiscordUserInfo, token *oauth2.Token) (*
 		db.UserServiceTokens.ExpiresAt.Set(token.Expiry),
 		db.UserServiceTokens.User.Link(db.Users.ID.Equals(newUser.ID)),
 		db.UserServiceTokens.Service.Link(db.Services.ID.Equals(service.ID)),
+		db.UserServiceTokens.ProviderID.Set(info.ID),
 	).Exec(ctx)
-
 	if err != nil {
 		return nil, err
 	}
@@ -129,8 +180,13 @@ func saveOrUpdateDiscordUser(info model.DiscordUserInfo, token *oauth2.Token) (*
 
 func DiscordLogin(ctx *gin.Context) {
 	oauthState := generateStateOauthCookie()
+	userID, exist := ctx.Get("userID")
+
+	if exist {
+		ctx.SetCookie("oauth_user_id", userID.(string), 300, "/", "", false, true)
+	}
 	ctx.SetCookie("oauthState", oauthState, 3600, "/", "", false, true)
-	
+
 	url := discordOauthConfig.AuthCodeURL(oauthState, oauth2.AccessTypeOffline)
 	ctx.Redirect(http.StatusTemporaryRedirect, url)
 }
@@ -138,6 +194,13 @@ func DiscordLogin(ctx *gin.Context) {
 func DiscordCallback(ctx *gin.Context) {
 	state := ctx.Query("state")
 	code := ctx.Query("code")
+
+	currentUserID, err := ctx.Cookie("oauth_user_id")
+	var userIDPtr *string
+	if err == nil && currentUserID != "" {
+		userIDPtr = &currentUserID
+	}
+	ctx.SetCookie("oauth_user_id", "", -1, "/", "", false, true)
 
 	cookieState, err := ctx.Cookie("oauthState")
 	if err != nil || cookieState != state {
@@ -163,25 +226,28 @@ func DiscordCallback(ctx *gin.Context) {
 		return
 	}
 
-	user, err := saveOrUpdateDiscordUser(discordUser, token)
+	user, err := saveOrUpdateDiscordUser(discordUser, token, userIDPtr)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Failed to save user: " + err.Error()})
 		return
 	}
 
-	tokenJWT, err := GenerateJWT(user.ID)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Token generation failed: " + err.Error()})
-		return
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:8081"
 	}
 
-	LinkAllUsersToAreas()
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": "Login successful",
-		"token":   tokenJWT,
-		"user": gin.H{
-			"id":    user.ID,
-			"email": user.Email,
-		},
-	})
+	if userIDPtr != nil && *userIDPtr != "" {
+		redirectURL := fmt.Sprintf("%s/dashboard", frontendURL)
+		ctx.Redirect(http.StatusTemporaryRedirect, redirectURL)
+	} else {
+		tokenJWT, err := GenerateJWT(user.ID)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Token generation failed: " + err.Error()})
+			return
+		}
+
+		redirectURL := fmt.Sprintf("%s/login?token=%s", frontendURL, tokenJWT)
+		ctx.Redirect(http.StatusTemporaryRedirect, redirectURL)
+	}
 }

@@ -35,27 +35,81 @@ func getGoogleOAuthConfig() *oauth2.Config {
 var googleOauthConfig *oauth2.Config = getGoogleOAuthConfig()
 
 func getUserDataFromGoogle(token *oauth2.Token) ([]byte, error) {
-    userInfoURL := "https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken
-    response, err := http.Get(userInfoURL)
-    if err != nil {
-        return nil, fmt.Errorf("Failed getting user info: %s", err.Error())
-    }
-    defer response.Body.Close()
-    contents, err := io.ReadAll(response.Body)
-    if err != nil {
-        return nil, fmt.Errorf("Failed read response: %s", err.Error())
-    }
+	userInfoURL := "https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken
+	response, err := http.Get(userInfoURL)
+	if err != nil {
+		return nil, fmt.Errorf("Failed getting user info: %s", err.Error())
+	}
+	defer response.Body.Close()
+	contents, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("Failed read response: %s", err.Error())
+	}
 
-    return contents, nil
+	return contents, nil
 }
 
-func saveOrUpdateGoogleUser(info model.GoogleUserInfo, token *oauth2.Token) (*db.UsersModel, error) {
+func saveOrUpdateGoogleUser(info model.GoogleUserInfo, token *oauth2.Token, existingUserID *string) (*db.UsersModel, error) {
 	ctx := context.Background()
 	serviceName := "Google"
 
-	service, _ := initializers.DB.Services.FindUnique(
+	service, err := initializers.DB.Services.FindUnique(
 		db.Services.Name.Equals(serviceName),
 	).Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("service not found: %s", err.Error())
+	}
+
+	if existingUserID != nil && *existingUserID != "" {
+		existingUser, err := initializers.DB.Users.FindUnique(
+			db.Users.ID.Equals(*existingUserID),
+		).Exec(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("user not found: %s", err.Error())
+		}
+
+		existingToken, _ := initializers.DB.UserServiceTokens.FindFirst(
+			db.UserServiceTokens.ServiceID.Equals(service.ID),
+			db.UserServiceTokens.ProviderID.Equals(info.ID),
+		).With(
+			db.UserServiceTokens.User.Fetch(),
+		).Exec(ctx)
+
+		if existingToken != nil && existingToken.UserID != *existingUserID {
+			return nil, fmt.Errorf("this Google account is already linked to another user")
+		}
+
+		userGoogleToken, _ := initializers.DB.UserServiceTokens.FindFirst(
+			db.UserServiceTokens.UserID.Equals(*existingUserID),
+			db.UserServiceTokens.ServiceID.Equals(service.ID),
+		).Exec(ctx)
+
+		if userGoogleToken != nil {
+			_, err = initializers.DB.UserServiceTokens.FindUnique(
+				db.UserServiceTokens.ID.Equals(userGoogleToken.ID),
+			).Update(
+				db.UserServiceTokens.AccessToken.Set(token.AccessToken),
+				db.UserServiceTokens.RefreshToken.Set(token.RefreshToken),
+				db.UserServiceTokens.ExpiresAt.Set(token.Expiry),
+				db.UserServiceTokens.ProviderID.Set(info.ID),
+			).Exec(ctx)
+		} else {
+			_, err = initializers.DB.UserServiceTokens.CreateOne(
+				db.UserServiceTokens.AccessToken.Set(token.AccessToken),
+				db.UserServiceTokens.RefreshToken.Set(token.RefreshToken),
+				db.UserServiceTokens.ExpiresAt.Set(token.Expiry),
+				db.UserServiceTokens.User.Link(db.Users.ID.Equals(*existingUserID)),
+				db.UserServiceTokens.Service.Link(db.Services.ID.Equals(service.ID)),
+				db.UserServiceTokens.ProviderID.Set(info.ID),
+			).Exec(ctx)
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		return existingUser, nil
+	}
 
 	existingUser, err := initializers.DB.Users.FindUnique(
 		db.Users.Email.Equals(info.Email),
@@ -74,6 +128,7 @@ func saveOrUpdateGoogleUser(info model.GoogleUserInfo, token *oauth2.Token) (*db
 				db.UserServiceTokens.AccessToken.Set(token.AccessToken),
 				db.UserServiceTokens.RefreshToken.Set(token.RefreshToken),
 				db.UserServiceTokens.ExpiresAt.Set(token.Expiry),
+				db.UserServiceTokens.ProviderID.Set(info.ID),
 			).Exec(ctx)
 		} else {
 			_, err = initializers.DB.UserServiceTokens.CreateOne(
@@ -82,6 +137,7 @@ func saveOrUpdateGoogleUser(info model.GoogleUserInfo, token *oauth2.Token) (*db
 				db.UserServiceTokens.ExpiresAt.Set(token.Expiry),
 				db.UserServiceTokens.User.Link(db.Users.ID.Equals(existingUser.ID)),
 				db.UserServiceTokens.Service.Link(db.Services.ID.Equals(service.ID)),
+				db.UserServiceTokens.ProviderID.Set(info.ID),
 			).Exec(ctx)
 		}
 
@@ -91,12 +147,10 @@ func saveOrUpdateGoogleUser(info model.GoogleUserInfo, token *oauth2.Token) (*db
 
 		return existingUser, nil
 	}
-
 	newUser, err := initializers.DB.Users.CreateOne(
 		db.Users.Email.Set(info.Email),
 		db.Users.PasswordHash.Set(""),
 	).Exec(ctx)
-
 	if err != nil {
 		return nil, err
 	}
@@ -107,8 +161,8 @@ func saveOrUpdateGoogleUser(info model.GoogleUserInfo, token *oauth2.Token) (*db
 		db.UserServiceTokens.ExpiresAt.Set(token.Expiry),
 		db.UserServiceTokens.User.Link(db.Users.ID.Equals(newUser.ID)),
 		db.UserServiceTokens.Service.Link(db.Services.ID.Equals(service.ID)),
+		db.UserServiceTokens.ProviderID.Set(info.ID),
 	).Exec(ctx)
-
 	if err != nil {
 		return nil, err
 	}
@@ -118,6 +172,11 @@ func saveOrUpdateGoogleUser(info model.GoogleUserInfo, token *oauth2.Token) (*db
 
 func GoogleLogin(ctx *gin.Context) {
 	oauthState := generateStateOauthCookie()
+	userID, exist := ctx.Get("userID")
+
+	if exist {
+		ctx.SetCookie("oauth_user_id", userID.(string), 300, "/", "", false, true)
+	}
 	ctx.SetCookie("oauthState", oauthState, 3600, "/", "", false, true)
 	url := googleOauthConfig.AuthCodeURL(oauthState, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	ctx.Redirect(http.StatusTemporaryRedirect, url)
@@ -126,6 +185,13 @@ func GoogleLogin(ctx *gin.Context) {
 func GoogleCallback(ctx *gin.Context) {
 	state := ctx.Query("state")
 	code := ctx.Query("code")
+
+	currentUserID, err := ctx.Cookie("oauth_user_id")
+	var userIDPtr *string
+	if err == nil && currentUserID != "" {
+		userIDPtr = &currentUserID
+	}
+	ctx.SetCookie("oauth_user_id", "", -1, "/", "", false, true)
 
 	cookieState, err := ctx.Cookie("oauthState")
 	if err != nil || cookieState != state {
@@ -151,25 +217,28 @@ func GoogleCallback(ctx *gin.Context) {
 		return
 	}
 
-	user, err := saveOrUpdateGoogleUser(googleUser, token)
+	user, err := saveOrUpdateGoogleUser(googleUser, token, userIDPtr)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Failed to save user: " + err.Error()})
 		return
 	}
 
-	tokenJWT, err := GenerateJWT(user.ID)
-    if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Token generation failed: " + err.Error()})
-        return
-    }
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:8081"
+	}
 
-	LinkAllUsersToAreas()
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": "Login successful",
-        "token": tokenJWT,
-		"user": gin.H{
-			"id":    user.ID,
-			"email": user.Email,
-		},
-	})
+	if userIDPtr != nil && *userIDPtr != "" {
+		redirectURL := fmt.Sprintf("%s/dashboard", frontendURL)
+		ctx.Redirect(http.StatusTemporaryRedirect, redirectURL)
+	} else {
+		tokenJWT, err := GenerateJWT(user.ID)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Token generation failed: " + err.Error()})
+			return
+		}
+
+		redirectURL := fmt.Sprintf("%s/login?token=%s", frontendURL, tokenJWT)
+		ctx.Redirect(http.StatusTemporaryRedirect, redirectURL)
+	}
 }
