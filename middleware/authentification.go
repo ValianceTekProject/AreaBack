@@ -93,10 +93,16 @@ func VerifyOauthUser(ctx *gin.Context) {
 
 	token := strings.TrimPrefix(authHeader, bearerPrefix)
 
-	_, err := ValidateJWTToken(token)
+	claims, err := ValidateJWTToken(token)
     if err != nil {
-        ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		ctx.Next()
         return
     }
+	userID, ok := claims["sub"].(string)
+	if !ok {
+		ctx.Next()
+		return
+	}
+	ctx.Set("userID", userID)
 	ctx.Next()
 }
