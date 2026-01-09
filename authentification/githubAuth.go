@@ -125,14 +125,13 @@ func GithubCallback(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Login successful",
-			"token":   tokenJWT,
-			"user": gin.H{
-				"id":    user.ID,
-				"email": user.Email,
-			},
-		})
+		frontendURL := os.Getenv("FRONTEND_URL")
+		if frontendURL == "" {
+			frontendURL = "http://localhost:8081"
+		}
+
+		redirectURL := fmt.Sprintf("%s/login?token=%s", frontendURL, tokenJWT)
+		c.Redirect(http.StatusTemporaryRedirect, redirectURL)
 	}
 }
 
