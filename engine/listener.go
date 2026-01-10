@@ -45,7 +45,7 @@ func handleEnableArea(area *db.AreasModel, ctx context.Context) {
 	if !exist {
 		return
 	}
-	
+
 	reaction, exist := area.Reaction()
 	if !exist {
 		return
@@ -58,7 +58,11 @@ func handleEnableArea(area *db.AreasModel, ctx context.Context) {
 			log.Printf("Handler not found: %s/%s", action.Service, action.Type)
 		}
 
-		if err := handler(nil); err != nil {
+		data := map[string]any{
+			"reaction_id": reaction.ID,
+		}
+
+		if err := handler(data); err != nil {
 			log.Printf("Error reaction: %v", err)
 		}
 

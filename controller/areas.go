@@ -154,7 +154,7 @@ func LinkReaction(ctx *gin.Context) {
 
 	action, exists := templates.GetReaction(addAction.ServiceName, addAction.Name)
 	if !exists {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Action not found"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Reaction not found"})
 		return
 	}
 

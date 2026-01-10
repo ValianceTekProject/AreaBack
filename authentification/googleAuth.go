@@ -27,6 +27,7 @@ func getGoogleOAuthConfig() *oauth2.Config {
 		ClientSecret: clientSecret,
 		Scopes: []string{
 			"https://www.googleapis.com/auth/userinfo.email",
+			"https://www.googleapis.com/auth/gmail.send",
 		},
 		Endpoint: google.Endpoint,
 	}
