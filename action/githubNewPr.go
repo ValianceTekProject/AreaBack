@@ -21,7 +21,6 @@ func ExecGithubNewPr(config map[string]any) error {
 	}
 
 	if githubToken != "" {
-		log.Printf("Execute github new PR")
 		execGithubNewPrAction(githubToken, actionID, ctx)
 	}
 	return nil
@@ -66,6 +65,3 @@ func execGithubNewPrAction(token string, actionID string, ctx context.Context) {
 
 	}
 }
-
-
-
