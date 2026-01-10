@@ -177,6 +177,12 @@ func GoogleLogin(ctx *gin.Context) {
 	if exist {
 		ctx.SetCookie("oauth_user_id", userID.(string), 300, "/", "", false, true)
 	}
+
+	redirectURI := ctx.Query("redirect_uri")
+	if redirectURI != "" {
+		ctx.SetCookie("oauth_redirect_uri", redirectURI, 300, "/", "", false, true)
+	}
+
 	ctx.SetCookie("oauthState", oauthState, 3600, "/", "", false, true)
 	url := googleOauthConfig.AuthCodeURL(oauthState, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	ctx.Redirect(http.StatusTemporaryRedirect, url)
@@ -223,14 +229,23 @@ func GoogleCallback(ctx *gin.Context) {
 		return
 	}
 
+	customRedirectURI, err := ctx.Cookie("oauth_redirect_uri")
+	if err == nil && customRedirectURI != "" {
+		ctx.SetCookie("oauth_redirect_uri", "", -1, "/", "", false, true)
+	}
+
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL == "" {
 		frontendURL = "http://localhost:8081"
 	}
 
 	if userIDPtr != nil && *userIDPtr != "" {
-		redirectURL := fmt.Sprintf("%s/dashboard", frontendURL)
-		ctx.Redirect(http.StatusTemporaryRedirect, redirectURL)
+		if customRedirectURI != "" {
+			ctx.Redirect(http.StatusTemporaryRedirect, customRedirectURI)
+		} else {
+			redirectURL := fmt.Sprintf("%s/dashboard", frontendURL)
+			ctx.Redirect(http.StatusTemporaryRedirect, redirectURL)
+		}
 	} else {
 		tokenJWT, err := GenerateJWT(user.ID)
 		if err != nil {
@@ -238,7 +253,12 @@ func GoogleCallback(ctx *gin.Context) {
 			return
 		}
 
-		redirectURL := fmt.Sprintf("%s/login?token=%s", frontendURL, tokenJWT)
-		ctx.Redirect(http.StatusTemporaryRedirect, redirectURL)
+		if customRedirectURI != "" {
+			redirectURL := fmt.Sprintf("%s?token=%s", customRedirectURI, tokenJWT)
+			ctx.Redirect(http.StatusTemporaryRedirect, redirectURL)
+		} else {
+			redirectURL := fmt.Sprintf("%s/login?token=%s", frontendURL, tokenJWT)
+			ctx.Redirect(http.StatusTemporaryRedirect, redirectURL)
+		}
 	}
 }
