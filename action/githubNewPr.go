@@ -66,6 +66,3 @@ func execGithubNewPrAction(token string, actionID string, ctx context.Context) {
 
 	}
 }
-
-
-

@@ -46,6 +46,7 @@ type Service struct {
 
 
 var Services = map[string]*Service{
+
 	"Github": {
 		Name: "Github",
 		Actions: map[string]*ActionDefinition{
@@ -92,6 +93,7 @@ var Services = map[string]*Service{
 		},
 		Reactions: map[string]*ReactionDefinition{},
 	},
+
 	"Discord": {
 		Name: "Discord",
 		Actions: map[string]*ActionDefinition{
@@ -129,6 +131,26 @@ var Services = map[string]*Service{
 					},
 				},
 				Handler: reaction.ReactWithDiscordMsg,
+			},
+		},
+	},
+
+	"Steam": {
+		Name: "Steam",
+		Actions: map[string]*ActionDefinition{
+			"steam_valiance_playing": {
+				Name:        "steam_valiance_playing",
+				Description: "Valiance is playing a game",
+				Service:     "Steam",
+				Config: []ActionField{
+					{
+						Name:     "channel_id",
+						Type:     "text",
+						Label:    "Channel ID",
+						Required: false,
+					},
+				},
+				Handler: action.ExecSteamPlaying,
 			},
 		},
 	},
