@@ -208,6 +208,27 @@ var Services = map[string]*Service{
 		},
 		Reactions: map[string]*ReactionDefinition{},
 	},
+
+	"OpenWeather": {
+		Name: "OpenWeather",
+		Actions: map[string]*ActionDefinition{
+			"openweather_rain": {
+				Name:        "openweather_rain",
+				Description: "It rains",
+				Service:     "OpenWeather",
+				Config: []ActionField{
+					{
+						Name:     "streamer_name",
+						Type:     "text",
+						Label:    "Streamer Username",
+						Required: true,
+					},
+				},
+				Handler: action.ExecWeatherRain,
+			},
+		},
+		Reactions: map[string]*ReactionDefinition{},
+	},
 }
 
 func GetService(name string) (*Service, bool) {
