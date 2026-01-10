@@ -11,43 +11,22 @@ import (
 	"github.com/google/go-github/v79/github"
 )
 
-func GetGithubWebHook(config map[string]any) error {
+func ExecGithubPR(config map[string]any) error {
 	ctx := context.Background()
-	actionID, ok := config["action_id"].(string)
-	if !ok {
-		return fmt.Errorf("Unable to retrieve actionId")
+
+	actionID, githubToken, error := GetGithubToken(ctx, config)
+
+	if error == nil {
+		return nil
 	}
-	action, err := initializers.DB.Actions.FindUnique(
-		db.Actions.ID.Equals(actionID),
-	).With(
-		db.Actions.Area.Fetch().With(
-			db.Areas.User.Fetch().With(
-				db.Users.ServiceTokens.Fetch(),
-			),
-		),
-		db.Actions.Service.Fetch(),
-	).Exec(ctx)
-	if err != nil {
-		log.Printf("Failed to get Actions: %v", err)
-	}
-	area := action.Area()
-	user := area.User()
-	service := action.Service()
-	var githubToken string
-	for _, ust := range user.ServiceTokens() {
-		fmt.Println(ust.ServiceID)
-		if ust.ServiceID == service.ID {
-			githubToken = ust.AccessToken
-			break
-		}
-	}
+
 	if githubToken != "" {
-		getGithubPrWebHook(githubToken, actionID, ctx)
+		execGithubPrAction(githubToken, actionID, ctx)
 	}
 	return nil
 }
 
-func getGithubPrWebHook(token string, actionID string, ctx context.Context) {
+func execGithubPrAction(token string, actionID string, ctx context.Context) {
 	client := github.NewClient(nil).WithAuthToken(token)
 
 	user, _, err := client.Users.Get(ctx, "")
@@ -86,3 +65,5 @@ func getGithubPrWebHook(token string, actionID string, ctx context.Context) {
 
 	}
 }
+
+
