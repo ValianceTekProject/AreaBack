@@ -5,8 +5,10 @@ import (
 	"github.com/ValianceTekProject/AreaBack/reaction"
 )
 
-type ActionHandler func(config map[string]any) error
-type ReactionHandler func(config map[string]any) error
+type (
+	ActionHandler   func(config map[string]any) error
+	ReactionHandler func(config map[string]any) error
+)
 
 type ActionField struct {
 	Name     string `json:"name"`
@@ -27,7 +29,7 @@ type ActionDefinition struct {
 	Description string
 	Service     string
 	Config      []ActionField
-	Handler		ActionHandler
+	Handler     ActionHandler
 }
 
 type ReactionDefinition struct {
@@ -35,7 +37,7 @@ type ReactionDefinition struct {
 	Description string
 	Service     string
 	Config      []ReactionField
-	Handler		ReactionHandler
+	Handler     ReactionHandler
 }
 
 type Service struct {
@@ -44,9 +46,7 @@ type Service struct {
 	Reactions map[string]*ReactionDefinition
 }
 
-
 var Services = map[string]*Service{
-
 	"Github": {
 		Name: "Github",
 		Actions: map[string]*ActionDefinition{
@@ -151,6 +151,25 @@ var Services = map[string]*Service{
 					},
 				},
 				Handler: action.ExecSteamPlaying,
+			},
+		},
+	},
+	"Google": {
+		Name: "Google",
+		Reactions: map[string]*ReactionDefinition{
+			"google_Send_Email": {
+				Name:        "google_Send_Email",
+				Description: "Send email to itself",
+				Service:     "Google",
+				Config: []ReactionField{
+					{
+						Name:     "content",
+						Type:     "text",
+						Label:    "Message Content",
+						Required: true,
+					},
+				},
+				Handler: reaction.SendEmail,
 			},
 		},
 	},
