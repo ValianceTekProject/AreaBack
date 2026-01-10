@@ -19,7 +19,7 @@ func ExecTwitchLive(config map[string]any) error {
 		return fmt.Errorf("Unable to retrieve actionId")
 	}
 
-	streamerName := "Gotaga"
+	streamerName := "Valiance_TV"
 	execTwitchLiveAction(streamerName, actionID, ctx)
 	return nil
 }
