@@ -51,7 +51,7 @@ var Services = map[string]*Service{
 		Actions: map[string]*ActionDefinition{
 			"github_pr_merged": {
 				Name:        "github_pr_merged",
-				Description: "New issue",
+				Description: "Pr closed",
 				Service:     "Github",
 				Config: []ActionField{
 					{
@@ -87,6 +87,7 @@ var Services = map[string]*Service{
 						Required: true,
 					},
 				},
+				Handler: action.ExecGithubNewPr,
 			},
 		},
 		Reactions: map[string]*ReactionDefinition{},

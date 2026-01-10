@@ -16,8 +16,8 @@ func ExecGithubPR(config map[string]any) error {
 
 	actionID, githubToken, error := GetGithubToken(ctx, config)
 
-	if error == nil {
-		return nil
+	if error != nil {
+		return error
 	}
 
 	if githubToken != "" {
