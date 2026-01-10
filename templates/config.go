@@ -49,8 +49,8 @@ var Services = map[string]*Service{
 	"Github": {
 		Name: "Github",
 		Actions: map[string]*ActionDefinition{
-			"github_new_issue": {
-				Name:        "github_new_issue",
+			"github_pr_merged": {
+				Name:        "github_pr_merged",
 				Description: "New issue",
 				Service:     "Github",
 				Config: []ActionField{
@@ -67,7 +67,7 @@ var Services = map[string]*Service{
 						Required: true,
 					},
 				},
-				Handler: action.GetGithubWebHook,
+				Handler: action.ExecGithubPR,
 			},
 			"github_new_PR": {
 				Name:        "github_new_PR",
