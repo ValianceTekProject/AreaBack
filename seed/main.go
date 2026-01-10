@@ -139,6 +139,22 @@ func create_steam_seed(client *db.PrismaClient) {
 	}
 }
 
+func create_twitch_seed(client *db.PrismaClient) {
+	ctx := context.Background()
+
+	_, err := client.Services.UpsertOne(
+		db.Services.ID.Equals(4),
+	).Create(
+		db.Services.Name.Set("Twitch"),
+	).Update(
+		db.Services.Name.Set("Twitch"),
+	).Exec(ctx)
+
+	if err != nil {
+		log.Fatalf("Error while seeding: %s", err)
+	}
+}
+
 func main() {
 	client := db.NewClient()
 	if err := client.Prisma.Connect(); err != nil {
@@ -150,5 +166,6 @@ func main() {
 	create_github_seed(client)
 	create_discord_seed(client)
 	create_steam_seed(client)
+	create_twitch_seed(client)
 	// Create_github_pr_to_discord_message(client)
 }

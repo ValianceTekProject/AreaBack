@@ -172,6 +172,27 @@ var Services = map[string]*Service{
 				Handler: reaction.SendEmail,
 			},
 		},
+
+	},
+	"Twitch": {
+		Name: "Twitch",
+		Actions: map[string]*ActionDefinition{
+			"twitch_streamer_live": {
+				Name:        "twitch_streamer_live",
+				Description: "Streamer is live",
+				Service:     "Twitch",
+				Config: []ActionField{
+					{
+						Name:     "streamer_name",
+						Type:     "text",
+						Label:    "Streamer Username",
+						Required: true,
+					},
+				},
+				Handler: action.ExecTwitchLive,
+			},
+		},
+		Reactions: map[string]*ReactionDefinition{},
 	},
 }
 
