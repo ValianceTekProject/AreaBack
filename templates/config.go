@@ -171,6 +171,20 @@ var Services = map[string]*Service{
 				},
 				Handler: reaction.SendEmail,
 			},
+			"google_Create_Sheet": {
+				Name:        "google_Create_Sheet",
+				Description: "Create a google Sheet",
+				Service:     "Google",
+				Config: []ReactionField{
+					{
+						Name:     "content",
+						Type:     "text",
+						Label:    "Message Content",
+						Required: true,
+					},
+				},
+				Handler: reaction.CreateSheet,
+			},
 		},
 
 	},
