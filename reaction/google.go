@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/ValianceTekProject/AreaBack/db"
 	"github.com/ValianceTekProject/AreaBack/initializers"
@@ -38,4 +39,13 @@ func GetGoogleToken(ctx context.Context, config map[string]any) (string, string,
 		}
 	}
 	return reactionID, googleToken, nil
+}
+
+type tokenTransport struct {
+	token string
+}
+
+func (t *tokenTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Set("Authorization", "Bearer "+t.token)
+	return http.DefaultTransport.RoundTrip(req)
 }

@@ -206,6 +206,20 @@ var Services = map[string]*Service{
 				},
 				Handler: reaction.CreateSheet,
 			},
+			"google_Create_Event": {
+				Name:        "google_Create_Event",
+				Description: "Create a google Event",
+				Service:     "Google",
+				Config: []ReactionField{
+					{
+						Name:     "content",
+						Type:     "text",
+						Label:    "Message Content",
+						Required: true,
+					},
+				},
+				Handler: reaction.CreateGoogleEvent,
+			},
 		},
 	},
 	"Twitch": {

@@ -37,11 +37,10 @@ func SendEmail(config map[string]any) error {
 	}
 	area := reaction.Area()
 	user := area.User()
-	log.Printf("Execute Gmail send email")
-	return execSendEmailAction(googleToken, reactionID, user, config, ctx)
+	return execSendEmailAction(googleToken, reactionID, user, ctx)
 }
 
-func execSendEmailAction(token string, reactionID string, user *db.UsersModel,config map[string]any, ctx context.Context) error {
+func execSendEmailAction(token string, reactionID string, user *db.UsersModel, ctx context.Context) error {
 	httpClient := &http.Client{
 		Transport: &tokenTransport{token: token},
 	}
@@ -78,13 +77,4 @@ func execSendEmailAction(token string, reactionID string, user *db.UsersModel,co
 
 	log.Printf("Email sent successfully (reactionID: %s)", reactionID)
 	return nil
-}
-
-type tokenTransport struct {
-	token string
-}
-
-func (t *tokenTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Set("Authorization", "Bearer "+t.token)
-	return http.DefaultTransport.RoundTrip(req)
 }
