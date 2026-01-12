@@ -62,6 +62,7 @@ func setupProtectedRouter(router *gin.Engine) *gin.Engine {
 
 		protectedRoute.GET("/areas", controller.GetUserAreas)
 		protectedRoute.PATCH("/areas/:areaId/status", controller.UpdateAreaStatus)
+		protectedRoute.DELETE("/areas/:areaId/delete", controller.DeleteArea)
 		protectedRoute.POST("/areas/:areaId/action/add", controller.LinkAction)
 		protectedRoute.POST("/areas/:areaId/reaction/add", controller.LinkReaction)
 	}
