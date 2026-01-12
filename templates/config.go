@@ -130,6 +130,7 @@ var Services = map[string]*Service{
 						Required: true,
 					},
 				},
+				Handler: action.ExecDiscordNewMsg,
 			},
 		},
 		Reactions: map[string]*ReactionDefinition{
