@@ -91,7 +91,28 @@ var Services = map[string]*Service{
 				Handler: action.ExecGithubNewPr,
 			},
 		},
-		Reactions: map[string]*ReactionDefinition{},
+		Reactions: map[string]*ReactionDefinition{
+			"github_create_pr": {
+				Name:        "github_create_pr",
+				Description: "Create Pr in TestArea Repository",
+				Service:     "Github",
+				Config: []ReactionField{
+					{
+						Name:     "channel_id",
+						Type:     "text",
+						Label:    "Channel ID",
+						Required: true,
+					},
+					{
+						Name:     "content",
+						Type:     "text",
+						Label:    "Message Content",
+						Required: true,
+					},
+				},
+				Handler: reaction.CreateGihubPr,
+			},
+		},
 	},
 
 	"Discord": {
@@ -186,7 +207,6 @@ var Services = map[string]*Service{
 				Handler: reaction.CreateSheet,
 			},
 		},
-
 	},
 	"Twitch": {
 		Name: "Twitch",
