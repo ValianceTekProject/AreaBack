@@ -22,7 +22,6 @@ func CreateSheet(config map[string]any) error {
 		return fmt.Errorf("empty Google token")
 	}
 
-	log.Printf("Execute Gmail send email")
 	return execCreateSheetAction(googleToken, reactionID, ctx)
 }
 
