@@ -9,7 +9,7 @@ import (
 	"github.com/ValianceTekProject/AreaBack/initializers"
 )
 
-func GetGoogleToken(ctx context.Context, config map[string]any) (string, string, error) {
+func GetGithubToken(ctx context.Context, config map[string]any) (string, string, error) {
 	reactionID, ok := config["reaction_id"].(string)
 	if !ok {
 		return "", "", fmt.Errorf("Unable to retrieve reactionId")
@@ -30,12 +30,12 @@ func GetGoogleToken(ctx context.Context, config map[string]any) (string, string,
 	area := action.Area()
 	user := area.User()
 	service := action.Service()
-	var googleToken string
+	var githubToken string
 	for _, ust := range user.ServiceTokens() {
 		if ust.ServiceID == service.ID {
-			googleToken = ust.AccessToken
+			githubToken = ust.AccessToken
 			break
 		}
 	}
-	return reactionID, googleToken, nil
+	return reactionID, githubToken, nil
 }
