@@ -204,3 +204,28 @@ func UpdateAreaStatus(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, updatedArea)
 }
+
+func DeleteArea(ctx *gin.Context) {
+	areaID := ctx.Param("areaId")
+	if areaID == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Area ID is required"})
+		return
+	}
+
+	var payload model.AreaUpdateStatusPayload
+	if err := ctx.ShouldBindJSON(&payload); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
+		return
+	}
+
+	deletedArea, err := initializers.DB.Areas.FindUnique(
+		db.Areas.ID.Equals(areaID),
+	).Delete().Exec(ctx)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete area status", "details": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, deletedArea)
+}
