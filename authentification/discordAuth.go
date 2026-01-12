@@ -27,6 +27,8 @@ func getDiscordOAuthConfig() *oauth2.Config {
 		Scopes: []string{
 			"identify",
 			"email",
+			"guilds",
+			"messages.read",
 		},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://discord.com/api/oauth2/authorize",
