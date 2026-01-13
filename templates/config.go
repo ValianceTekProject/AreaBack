@@ -174,6 +174,26 @@ var Services = map[string]*Service{
 				},
 				Handler: reaction.ReactWithDiscordMsg,
 			},
+			"discord_add_emoji": {
+				Name:        "discord_add_emoji",
+				Description: "Add emoji to last msg",
+				Service:     "Discord",
+				Config: []ReactionField{
+					{
+						Name:     "channel_id",
+						Type:     "text",
+						Label:    "Channel ID",
+						Required: true,
+					},
+					{
+						Name:     "content",
+						Type:     "text",
+						Label:    "Message Content",
+						Required: true,
+					},
+				},
+				Handler: reaction.ReactWithDiscordReaction,
+			},
 		},
 	},
 
