@@ -178,6 +178,22 @@ var Services = map[string]*Service{
 	},
 	"Google": {
 		Name: "Google",
+		Actions: map[string]*ActionDefinition{
+			"google_new_file_drive": {
+				Name:        "google_new_file_drive",
+				Description: "New file created in drive",
+				Service:     "Google",
+				Config: []ActionField{
+					{
+						Name:     "channel_id",
+						Type:     "text",
+						Label:    "Channel ID",
+						Required: false,
+					},
+				},
+				Handler: action.ExecGoogleDriveNewFile,
+			},
+		},
 		Reactions: map[string]*ReactionDefinition{
 			"google_Send_Email": {
 				Name:        "google_Send_Email",
