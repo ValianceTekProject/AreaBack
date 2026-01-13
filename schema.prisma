@@ -15,6 +15,8 @@ model Users {
   email         String   @unique
   passwordHash  String   @map("password_hash")
   createdAt     DateTime @default(now()) @map("created_at")
+  admin         Boolean  @default(false)
+  authorized    Boolean  @default(false)
   
   areas         Areas[]
   serviceTokens UserServiceTokens[]

@@ -66,6 +66,10 @@ func setupProtectedRouter(router *gin.Engine) *gin.Engine {
 		protectedRoute.POST("/areas/:areaId/action/add", controller.LinkAction)
 		protectedRoute.POST("/areas/:areaId/reaction/add", controller.LinkReaction)
 	}
+	protectedRoute.Use(middleware.CheckAdminAccess)
+	{
+		// protectedRoute.PATCH("/areas/:userId/status", controller.UpdateUserStatus)
+	}
 	return router
 }
 

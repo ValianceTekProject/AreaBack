@@ -69,8 +69,8 @@ func CheckUserAccess(ctx *gin.Context) {
 		db.Users.ID.Equals(userID),
 	).Exec(ctx)
 
-	if err != nil || user == nil {
-		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
+	if err != nil || user == nil || user.Authorized != true {
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user not found or not authorized"})
 		return
 	}
 
