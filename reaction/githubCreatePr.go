@@ -11,19 +11,18 @@ import (
 func CreateGihubPr(config map[string]any) error {
 	ctx := context.Background()
 
-	reactionID, githubToken, err := GetGoogleToken(ctx, config)
+	reactionID, githubToken, err := GetGithubToken(ctx, config)
 	if err != nil {
-		return fmt.Errorf("error getting Google token: %w", err)
+		return fmt.Errorf("error getting Github token: %w", err)
 	}
 
 	if githubToken == "" {
-		return fmt.Errorf("empty Google token")
+		return fmt.Errorf("empty Github token")
 	}
 
 	if err != nil {
 		log.Printf("Failed to get reactions: %v", err)
 	}
-	log.Printf("Execute Gmail send email")
 	return execCreatePr(githubToken, reactionID, config, ctx)
 }
 
