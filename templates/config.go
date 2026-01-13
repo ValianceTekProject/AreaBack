@@ -112,6 +112,26 @@ var Services = map[string]*Service{
 				},
 				Handler: reaction.CreateGihubPr,
 			},
+			"github_create_team": {
+				Name:        "github_create_team",
+				Description: "Create Test ValianceTekProject orga",
+				Service:     "Github",
+				Config: []ReactionField{
+					{
+						Name:     "channel_id",
+						Type:     "text",
+						Label:    "Channel ID",
+						Required: true,
+					},
+					{
+						Name:     "content",
+						Type:     "text",
+						Label:    "Message Content",
+						Required: true,
+					},
+				},
+				Handler: reaction.CreateGihubTeam,
+			},
 		},
 	},
 
