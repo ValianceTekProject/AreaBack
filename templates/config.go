@@ -193,6 +193,20 @@ var Services = map[string]*Service{
 				},
 				Handler: action.ExecGoogleDriveNewFile,
 			},
+			"google_new_mail": {
+				Name:        "google_new_mail",
+				Description: "New mail received",
+				Service:     "Google",
+				Config: []ActionField{
+					{
+						Name:     "channel_id",
+						Type:     "text",
+						Label:    "Channel ID",
+						Required: false,
+					},
+				},
+				Handler: action.ExecGmailNewEmail,
+			},
 		},
 		Reactions: map[string]*ReactionDefinition{
 			"google_Send_Email": {

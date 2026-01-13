@@ -9,11 +9,11 @@ import (
 
 	"github.com/ValianceTekProject/AreaBack/db"
 	"github.com/ValianceTekProject/AreaBack/initializers"
-	"google.golang.org/api/drive/v3"
+	"google.golang.org/api/gmail/v1"
 	"google.golang.org/api/option"
 )
 
-func ExecGoogleDriveNewFile(config map[string]any) error {
+func ExecGmailNewEmail(config map[string]any) error {
 	ctx := context.Background()
 
 	actionID, googleToken, err := GetGoogleToken(ctx, config)
@@ -23,37 +23,36 @@ func ExecGoogleDriveNewFile(config map[string]any) error {
 	}
 
 	if googleToken != "" {
-		execGoogleDriveNewFileAction(googleToken, actionID, ctx)
+		execGmailNewEmailAction(googleToken, actionID, ctx)
 	}
 	return nil
 }
 
-func execGoogleDriveNewFileAction(token string, actionID string, ctx context.Context) {
+func execGmailNewEmailAction(token string, actionID string, ctx context.Context) {
 	httpClient := &http.Client{
 		Transport: &tokenTransport{token: token},
 	}
 
-	driveService, err := drive.NewService(ctx, option.WithHTTPClient(httpClient))
+	gmailService, err := gmail.NewService(ctx, option.WithHTTPClient(httpClient))
 	if err != nil {
-		fmt.Printf("Failed to create Drive service: %v\n", err)
+		fmt.Printf("Failed to create Gmail service: %v\n", err)
 		return
 	}
 
-	since := time.Now().Add(-1 * time.Minute).Format(time.RFC3339)
-	query := fmt.Sprintf("createdTime > '%s' and trashed = false", since)
+	since := time.Now().Add(-1 * time.Minute).Unix()
+	query := fmt.Sprintf("after:%d", since)
 
-	fileList, err := driveService.Files.List().
+	messageList, err := gmailService.Users.Messages.List("me").
 		Q(query).
-		PageSize(100).
-		Fields("files(id, name, createdTime, mimeType)").
+		MaxResults(100).
 		Do()
 
 	if err != nil {
-		fmt.Printf("Failed to list files: %v\n", err)
+		fmt.Printf("Failed to list messages: %v\n", err)
 		return
 	}
 
-	if len(fileList.Files) > 0 {
+	if len(messageList.Messages) > 0 {
 		_, err := initializers.DB.Actions.FindUnique(
 			db.Actions.ID.Equals(actionID),
 		).Update(
