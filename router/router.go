@@ -68,7 +68,7 @@ func setupProtectedRouter(router *gin.Engine) *gin.Engine {
 	}
 	protectedRoute.Use(middleware.CheckAdminAccess)
 	{
-		// protectedRoute.PATCH("/areas/:userId/status", controller.UpdateUserStatus)
+		protectedRoute.PATCH("/users/:userId/status", controller.UpdateUserStatus)
 	}
 	return router
 }
