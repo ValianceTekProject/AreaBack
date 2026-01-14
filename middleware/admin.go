@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func CheckUserAccess(ctx *gin.Context) {
+func CheckAdminAccess(ctx *gin.Context) {
 	authHeader := ctx.GetHeader("Authorization")
 	if authHeader == "" {
 		ctx.AbortWithStatus(http.StatusUnauthorized)
@@ -40,7 +40,7 @@ func CheckUserAccess(ctx *gin.Context) {
 		db.Users.ID.Equals(userID),
 	).Exec(ctx)
 
-	if err != nil || user == nil || (user.Authorized != true && user.Admin != true){
+	if err != nil || user == nil || user.Admin != true {
 		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user not found or not authorized"})
 		return
 	}

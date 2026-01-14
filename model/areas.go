@@ -50,6 +50,10 @@ type AreaUpdateStatusPayload struct {
 	IsEnabled bool `json:"is_enabled"`
 }
 
+type UserUpdateStatusPayload struct {
+	Authorized bool `json:"authorized"`
+}
+
 type AreaInput struct {
 	Name string `json:"name"`
 }
