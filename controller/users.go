@@ -35,3 +35,32 @@ func UpdateUserStatus(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, updatedUser)
 }
+
+func GetUserServices(ctx *gin.Context) {
+	userId := ctx.Param("userId")
+
+	if userId == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "User ID is required"})
+		return
+	}
+
+	user, err := initializers.DB.Users.FindUnique(
+		db.Users.ID.Equals(userId),
+	).Exec(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	serviceTokens, err := initializers.DB.UserServiceTokens.FindMany(
+		db.UserServiceTokens.UserID.Equals(user.ID),
+	).With(
+		db.UserServiceTokens.Service.Fetch(),
+	).Exec(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user services"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, serviceTokens)
+}
