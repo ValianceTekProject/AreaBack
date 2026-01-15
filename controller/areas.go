@@ -212,12 +212,6 @@ func DeleteArea(ctx *gin.Context) {
 		return
 	}
 
-	var payload model.AreaUpdateStatusPayload
-	if err := ctx.ShouldBindJSON(&payload); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
-		return
-	}
-
 	deletedArea, err := initializers.DB.Areas.FindUnique(
 		db.Areas.ID.Equals(areaID),
 	).Delete().Exec(ctx)
