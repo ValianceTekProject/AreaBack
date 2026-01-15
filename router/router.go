@@ -5,6 +5,7 @@ import (
 
 	"github.com/ValianceTekProject/AreaBack/authentification"
 	"github.com/ValianceTekProject/AreaBack/controller"
+	"github.com/ValianceTekProject/AreaBack/download"
 	"github.com/ValianceTekProject/AreaBack/engine"
 	"github.com/ValianceTekProject/AreaBack/middleware"
 	"github.com/gin-contrib/cors"
@@ -44,6 +45,7 @@ func setupAuthRouter(router *gin.Engine) *gin.Engine {
 	router.GET("/auth/discord/callback", authentification.DiscordCallback)
 
 	router.GET("/about.json", engine.GetAbout)
+	router.GET("/client.apk", download.DownloadApk)
 
 	return router
 }
