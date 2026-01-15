@@ -95,3 +95,14 @@ func GetUserServices(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, serviceTokens)
 }
+
+func GetSelfUserId(ctx *gin.Context) {
+	userInterface, exists := ctx.Get("user")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	user := userInterface.(*db.UsersModel)
+	ctx.JSON(http.StatusOK, gin.H{"userId": user.ID})
+}
