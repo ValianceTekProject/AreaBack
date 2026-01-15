@@ -9,6 +9,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func GetUsers(ctx *gin.Context) {
+	users, err := initializers.DB.Users.FindMany(
+	).Exec(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Failed to fetch users"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, users)
+}
+
 func UpdateUserStatus(ctx *gin.Context) {
 	userId := ctx.Param("userId")
 
