@@ -9,6 +9,26 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func GetSpecificUser(ctx *gin.Context) {
+
+	userId := ctx.Param("userId")
+
+	if userId == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "User ID is required"})
+		return
+	}
+
+	users, err := initializers.DB.Users.FindMany(
+		db.Users.ID.Equals(userId),
+	).With().Exec(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Failed to fetch users"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, users)
+}
+
 func GetUsers(ctx *gin.Context) {
 	users, err := initializers.DB.Users.FindMany(
 	).Exec(ctx)
