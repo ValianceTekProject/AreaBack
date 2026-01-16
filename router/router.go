@@ -63,7 +63,8 @@ func setupProtectedRouter(router *gin.Engine) *gin.Engine {
 		protectedRoute.POST("/areas/create", controller.CreateArea)
 
 		protectedRoute.GET("/areas", controller.GetUserAreas)
-		protectedRoute.GET("/me/userId", controller.GetSelfUserId)
+		protectedRoute.GET("/me/userId", controller.GetSelfUserID)
+		protectedRoute.GET("/me", controller.GetSelf)
 		protectedRoute.GET("/users/:userId", controller.GetSpecificUser)
 		protectedRoute.GET("/services/:userId", controller.GetUserServices)
 		protectedRoute.PATCH("/areas/:areaId/status", controller.UpdateAreaStatus)
